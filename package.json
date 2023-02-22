@@ -11,5 +11,13 @@
   "dependencies": {
     "axios": "^1.2.2"
   },
-  "type": "module"
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darrylmorley/lightspeed-retail-sdk"
+  },
+  "keywords": [
+    "lightspeed retail",
+    "node"
+  ]
 }
