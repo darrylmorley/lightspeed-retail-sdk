@@ -6,8 +6,9 @@ We currently have the following methods available:
 
 ```
 getCustomers()
-getItems()
 getItem()
+getAllItems()
+getMultipleItems() // await api.getMultipleItems("[7957, 7944]");
 getCategories()
 getCategory()
 getManufacturers()

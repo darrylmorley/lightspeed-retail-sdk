@@ -144,7 +144,25 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getItems(relations) {
+  async getMultipleItems(items) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
+      method: "GET",
+    };
+
+    if (!items) throw new Error("You need to provide itemID's");
+
+    if (items) options.url = options.url + `?itemID=IN,${items}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEMS ERROR", error.response);
+    }
+  }
+
+  async getAllItems(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
