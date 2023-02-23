@@ -290,7 +290,7 @@ class LightspeedRetailSDK {
 
   async getOpenOrdersByVendorID(vendorID) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor"]&vendorID=${vendorID}&complete=false`,
+      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor", "OrderLines"]&vendorID=${vendorID}&complete=false`,
       method: "GET",
     };
 
