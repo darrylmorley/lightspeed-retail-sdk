@@ -288,6 +288,22 @@ class LightspeedRetailSDK {
     }
   }
 
+  async getOpenOrdersByVendorID(vendorID) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor"]&vendorID=${vendorID}&complete=false`,
+      method: "GET",
+    };
+
+    // if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ORDER ERROR", error);
+    }
+  }
+
   async getVendors(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Vendor.json`,

@@ -18,6 +18,8 @@ getVendors()
 getVendor()
 getSales()
 getSale()
+getOrdersByVendorID()
+getOpenOrdersByVendorID()
 ```
 
 ## Get started:
