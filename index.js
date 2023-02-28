@@ -419,6 +419,22 @@ class LightspeedRetailSDK {
       return this.handleError("GET SALE ERROR", error);
     }
   }
+
+  async getSaleLinesByItems(itemIDs, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,${itemIDs}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET SALE ERROR", error);
+    }
+  }
 }
 
 export default LightspeedRetailSDK;

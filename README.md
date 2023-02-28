@@ -21,6 +21,7 @@ getVendor()
 getSales()
 getSale()
 getSaleLinesByItem()
+getSaleLinesByItems("[7957, 7944]")
 getOrdersByVendorID()
 getOpenOrdersByVendorID()
 ```
