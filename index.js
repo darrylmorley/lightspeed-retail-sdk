@@ -144,7 +144,7 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getMultipleItems(items) {
+  async getMultipleItems(items, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
@@ -153,6 +153,8 @@ class LightspeedRetailSDK {
     if (!items) throw new Error("You need to provide itemID's");
 
     if (items) options.url = options.url + `?itemID=IN,${items}`;
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
