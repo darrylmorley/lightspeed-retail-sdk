@@ -20,6 +20,7 @@ getVendors()
 getVendor()
 getSales()
 getSale()
+getSaleLinesByItem()
 getOrdersByVendorID()
 getOpenOrdersByVendorID()
 ```
