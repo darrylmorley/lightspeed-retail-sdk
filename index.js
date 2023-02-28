@@ -186,7 +186,7 @@ class LightspeedRetailSDK {
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
