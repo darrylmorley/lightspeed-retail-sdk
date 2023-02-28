@@ -180,6 +180,22 @@ class LightspeedRetailSDK {
     }
   }
 
+  async getvendorItems(vendorID, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json?defaultVendorID=${vendorID}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEMS ERROR", error.response);
+    }
+  }
+
   async getItem(itemID, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item/${itemID}.json`,
