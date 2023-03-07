@@ -437,6 +437,24 @@ class LightspeedRetailSDK {
       return this.handleError("GET SALE ERROR", error);
     }
   }
+
+  async getSaleLinesByVendorID(vendorID, startDate = undefined, endDate = undefined) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?load_relations=["Item"]&Item.defaultVendorID=${vendorID}`,
+      method: "GET",
+    };
+
+    if (startDate && endDate)
+      options.url =
+        options.url + `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET SALE ERROR", error);
+    }
+  }
 }
 
 export default LightspeedRetailSDK;
