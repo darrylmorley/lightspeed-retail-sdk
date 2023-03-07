@@ -105,7 +105,7 @@ class LightspeedRetailSDK {
       if (retries < this.maxRetries) {
         console.log(`Error: ${err}, retrying in 2 seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        return await this.getResource(url, retries + 1);
+        return await this.getResource(options.url, retries + 1);
       } else {
         console.error(`Failed Request statusText: `, res.statusText);
         console.log(`Failed data: `, response.data);
@@ -420,13 +420,15 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getSaleLinesByItems(itemIDs, relations) {
+  async getSaleLinesByItems(itemIDs, startDate = undefined, endDate = undefined) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,${itemIDs}`,
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,[${itemIDs}]`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    if (startDate && endDate)
+      options.url =
+        options.url + `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
 
     try {
       const response = await this.getAllData(options);

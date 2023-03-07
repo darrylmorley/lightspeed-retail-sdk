@@ -21,7 +21,7 @@ getVendor()
 getSales()
 getSale()
 getSaleLinesByItem()
-getSaleLinesByItems("[7957, 7944]")
+getSaleLinesByItems(`39, 2126, 3505`, startDate?, endDate?)
 getOrdersByVendorID()
 getOpenOrdersByVendorID()
 ```
