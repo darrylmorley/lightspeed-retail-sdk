@@ -246,7 +246,7 @@ class LightspeedRetailSDK {
 
   async getManufacturers(relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Category.json`,
+      url: `${this.baseUrl}/${this.accountID}/Manufacturer.json`,
       method: "GET",
     };
 
