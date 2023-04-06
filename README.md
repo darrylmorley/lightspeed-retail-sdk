@@ -42,6 +42,8 @@ const api = new LightspeedRetailSDK({
   clientSecret: "Your client secret.",
   refreshToken: "Your refresh token.",
 });
+
+export default LightspeedRetailSDK
 ```
 
 ## Example Request
