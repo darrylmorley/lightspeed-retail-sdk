@@ -128,6 +128,26 @@ class LightspeedRetailSDK {
     return allData;
   }
 
+  // Get customer by ID
+  async getCustomer(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Customer/${id}.json`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide a customerID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET CUSTOMERS ERROR", error);
+    }
+  }
+
+  // Get all customers
   async getCustomers(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Customer.json`,
@@ -144,13 +164,33 @@ class LightspeedRetailSDK {
     }
   }
 
+  // Get item by ID
+  async getItem(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item/${id}.json`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide a itemID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEM ERROR", error);
+    }
+  }
+
+  // Get multiple items by ID
   async getMultipleItems(items, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
     };
 
-    if (!items) throw new Error("You need to provide itemID's");
+    if (!items) this.handleError("You need to provide itemID's");
 
     if (items) options.url = options.url + `?itemID=IN,${items}`;
 
@@ -164,7 +204,8 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getAllItems(relations) {
+  // Get all items
+  async getItems(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
@@ -180,6 +221,7 @@ class LightspeedRetailSDK {
     }
   }
 
+  // Get all items by vendor
   async getvendorItems(vendorID, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json?defaultVendorID=${vendorID}`,
@@ -196,11 +238,14 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getItem(itemID, relations) {
+  // Get category by ID
+  async getCategory(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Item/${itemID}.json`,
+      url: `${this.baseUrl}/${this.accountID}/Category/${id}.json`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a categoryID");
 
     if (relations) options.url = options.url + `?load_relations=${relations}`;
 
@@ -208,10 +253,11 @@ class LightspeedRetailSDK {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET ITEM ERROR", error);
+      return this.handleError("GET CATEGORY ERROR", error);
     }
   }
 
+  // Get all categories
   async getCategories(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Category.json`,
@@ -228,11 +274,14 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getCategory(categoryID, relations) {
+  // Get Manufacturer by ID
+  async getManufacturer(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Category/${categoryID}.json`,
+      url: `${this.baseUrl}/${this.accountID}/Manufacturer/${id}.json`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a manufacturerID");
 
     if (relations) options.url = options.url + `?load_relations=${relations}`;
 
@@ -240,10 +289,11 @@ class LightspeedRetailSDK {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET CATEGORY ERROR", error);
+      return this.handleError("GET MANUFACTURER ERROR", error);
     }
   }
 
+  // Get all manufacturers
   async getManufacturers(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Manufacturer.json`,
@@ -260,11 +310,14 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getManufacturer(manufacturerID, relations) {
+  // Get order by ID
+  async getOrder(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Manufacturer/${manufacturerID}.json`,
+      url: `${this.baseUrl}/${this.accountID}/Order/${id}.json`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a orderID");
 
     if (relations) options.url = options.url + `?load_relations=${relations}`;
 
@@ -272,10 +325,11 @@ class LightspeedRetailSDK {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET MANUFACTURER ERROR", error);
+      return this.handleError("GET ORDER ERROR", error);
     }
   }
 
+  // Get all orders
   async getOrders(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Order.json`,
@@ -292,11 +346,14 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getOrder(orderID, relations) {
+  // Get all orders by vendor
+  async getOrdersByVendorID(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order/${orderID}.json`,
+      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor"]&vendorID=${id}`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a vendorID");
 
     if (relations) options.url = options.url + `?load_relations=${relations}`;
 
@@ -308,13 +365,16 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getOrdersByVendorID(vendorID) {
+  // Get all open orders by vendor
+  async getOpenOrdersByVendorID(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor"]&vendorID=${vendorID}`,
+      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor", "OrderLines"]&vendorID=${id}&complete=false`,
       method: "GET",
     };
 
-    // if (relations) options.url = options.url + `?load_relations=${relations}`;
+    if (!id) return this.handleError("You need to provide a vendorID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -324,22 +384,26 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getOpenOrdersByVendorID(vendorID) {
+  // Get vendor by ID
+  async getVendor(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor", "OrderLines"]&vendorID=${vendorID}&complete=false`,
+      url: `${this.baseUrl}/${this.accountID}/Vendor/${id}.json`,
       method: "GET",
     };
 
-    // if (relations) options.url = options.url + `?load_relations=${relations}`;
+    if (!id) return this.handleError("You need to provide a vendorID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET ORDER ERROR", error);
+      return this.handleError("GET VENDOR ERROR", error);
     }
   }
 
+  // Get all vendors
   async getVendors(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Vendor.json`,
@@ -356,11 +420,14 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getVendor(vendorID, relations) {
+  // Get sale by ID
+  async getSale(id, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Vendor/${vendorID}.json`,
+      url: `${this.baseUrl}/${this.accountID}/Sale/${id}.json`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a saleID");
 
     if (relations) options.url = options.url + `?load_relations=${relations}`;
 
@@ -368,10 +435,11 @@ class LightspeedRetailSDK {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET VENDOR ERROR", error);
+      return this.handleError("GET SALE ERROR", error);
     }
   }
 
+  // Get all sales
   async getSales(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Sale.json`,
@@ -385,22 +453,6 @@ class LightspeedRetailSDK {
       return response;
     } catch (error) {
       return this.handleError("GET SALES ERROR", error);
-    }
-  }
-
-  async getSale(saleID, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Sale/${saleID}.json`,
-      method: "GET",
-    };
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
-
-    try {
-      const response = await this.getAllData(options);
-      return response;
-    } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
     }
   }
 
@@ -420,11 +472,19 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getSaleLinesByItems(itemIDs, startDate = undefined, endDate = undefined) {
+  // Get sales lines by item ID's and date range
+  async getSaleLinesByItems(ids, startDate = undefined, endDate = undefined, relations) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,[${itemIDs}]`,
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,[${ids}]`,
       method: "GET",
     };
+
+    if (!ids) return this.handleError("You need to provide itemIDs");
+    if (startDate && !endDate) return this.handleError("You need to provide an end date");
+    if (endDate && !startDate)
+      return this.handleError("You need to provide a start date");
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
 
     if (startDate && endDate)
       options.url =
@@ -438,11 +498,24 @@ class LightspeedRetailSDK {
     }
   }
 
-  async getSaleLinesByVendorID(vendorID, startDate = undefined, endDate = undefined) {
+  // Get sales lines by vendor ID's and date range
+  async getSaleLinesByVendorID(
+    id,
+    startDate = undefined,
+    endDate = undefined,
+    relations
+  ) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?load_relations=["Item"]&Item.defaultVendorID=${vendorID}`,
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?load_relations=${
+        relations ? relations : `["Item"]`
+      }&Item.defaultVendorID=${id}`,
       method: "GET",
     };
+
+    if (!id) return this.handleError("You need to provide a vendorID");
+    if (startDate && !endDate) return this.handleError("You need to provide an end date");
+    if (endDate && !startDate)
+      return this.handleError("You need to provide a start date");
 
     if (startDate && endDate)
       options.url =

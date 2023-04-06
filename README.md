@@ -2,29 +2,31 @@
 
 ## Work In Progress
 
-We currently have the following methods available:
+All methods accept relations, these should be provided as strings i.e.: `["relation1", "relation2"]`
+We currently have the following methods available,
 
 ```
-getCustomers()
-getItem()
-getAllItems()
-getVendorItems()
-getMultipleItems() // await api.getMultipleItems("[7957, 7944]");
-getCategories()
-getCategory()
-getManufacturers()
-getManufacturer()
-getOrders()
-getOrder()
-getVendors()
-getVendor()
-getSales()
-getSale()
-getSaleLinesByItem()
-getSaleLinesByItems(`39, 2126, 3505`, startDate?, endDate?)
-getSaleLinesByVendorID(vendorID, startDate?, endDate?)
-getOrdersByVendorID()
-getOpenOrdersByVendorID()
+getCustomer(id: int, relations?: string)
+getCustomers(relations?: string)
+getItem(id: int, relations?: string)
+getItems(relations?: string)
+getMultipleItems(ids: string = "[102, 103]", relations?: string)
+getVendorItems(id: int relations?: string)
+getCategory(id: int, relations?: string)
+getCategories(relations?: string)
+getManufacturer(id: int, relations?: string)
+getManufacturers(relations?: string)
+getOrder(id: int, relations?: string)
+getOrders(relations?: string)
+getOrdersByVendorID(id: int, relations?: string)
+getOpenOrdersByVendorID(id: int, relations?: string)
+getVendor(id: int, relations?: string)
+getVendors(relations?: string)
+getSale(id: int, relations?: string)
+getSales(relations?: string)
+getSaleLinesByItem(id: int, relations?: string)
+getSaleLinesByItems(ids: string = `39, 2126, 3505`, startDate?, endDate?, relations?: string)
+getSaleLinesByVendorID(id: int, startDate?, endDate?, relations?: string)
 ```
 
 ## Get started:
