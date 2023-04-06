@@ -2,6 +2,8 @@
 
 ## Work In Progress
 
+Constributions Welcome
+
 All methods accept relations, these should be provided as strings i.e.: `["relation1", "relation2"]`
 We currently have the following methods available,
 
