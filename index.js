@@ -238,6 +238,42 @@ class LightspeedRetailSDK {
     }
   }
 
+  // Get all Matrix Items
+  async getMatrixItems(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/ItemMatrix.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEM ERROR", error);
+    }
+  }
+
+  // Get Matrix Item by ID
+  async getItem(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide a itemID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEM ERROR", error);
+    }
+  }
+
   // Get category by ID
   async getCategory(id, relations) {
     const options = {

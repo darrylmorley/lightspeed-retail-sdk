@@ -14,6 +14,8 @@ getItem(id: int, relations?: string)
 getItems(relations?: string)
 getMultipleItems(ids: string = "[102, 103]", relations?: string)
 getVendorItems(id: int relations?: string)
+getMatrixItems(relations? string)
+getMatrixItem(id: int, relations? string)
 getCategory(id: int, relations?: string)
 getCategories(relations?: string)
 getManufacturer(id: int, relations?: string)
@@ -43,7 +45,7 @@ const api = new LightspeedRetailSDK({
   refreshToken: "Your refresh token.",
 });
 
-export default LightspeedRetailSDK
+export default api
 ```
 
 ## Example Request
