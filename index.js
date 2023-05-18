@@ -256,7 +256,7 @@ class LightspeedRetailSDK {
   }
 
   // Get Matrix Item by ID
-  async getItem(id, relations) {
+  async getMatrixItem(id, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
       method: "GET",
