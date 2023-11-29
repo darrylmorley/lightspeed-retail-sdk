@@ -492,6 +492,22 @@ class LightspeedRetailSDK {
     }
   }
 
+  async getMultipleSales(saleIDs, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Sale.json?saleID=IN,${saleIDs}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET SALE ERROR", error);
+    }
+  }
+
   async getSaleLinesByItem(itemID, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=${itemID}`,
