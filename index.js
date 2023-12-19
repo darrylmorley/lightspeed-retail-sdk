@@ -1,18 +1,7 @@
 import axios from "axios";
 
-// Cost per operation
-const getRequestUnits = (operation) => {
-  switch (operation) {
-    case "GET":
-      return 1;
-    case "POST":
-      return 10;
-    case "PUT":
-      return 10;
-    default:
-      return 10;
-  }
-};
+const operationUnits = { GET: 1, POST: 10, PUT: 10 };
+const getRequestUnits = (operation) => operationUnits[operation] || 10;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -27,20 +16,28 @@ class LightspeedRetailSDK {
     this.baseUrl = "https://api.lightspeedapp.com/API/V3/Account";
     this.maxRetries = 3;
     this.lastResponse = null;
+    this.token = null;
+    this.tokenExpiry = null;
   }
 
-  handleError(msg, err) {
-    console.error(`${msg} - ${err}`);
-    throw err;
+  // handleError function to handle errors
+  handleError(msg, err, shouldThrow = true) {
+    const errorMessage = `${msg} - ${err.message || err}`;
+    console.error(errorMessage);
+
+    if (shouldThrow) {
+      throw new Error(errorMessage);
+    }
   }
 
+  // Update the last response
   setLastResponse = (response) => (this.lastResponse = response);
 
+  // Handle rate limits
   handleRateLimit = async (options) => {
     if (!this.lastResponse) return null;
 
     const { method } = options;
-
     const requestUnits = getRequestUnits(method);
     const rateHeader = this.lastResponse.headers["x-ls-api-bucket-level"];
 
@@ -50,7 +47,14 @@ class LightspeedRetailSDK {
     const availableUnits = available - used;
     if (requestUnits <= availableUnits) return 0;
 
-    const dripRate = this.lastResponse.headers["x-ls-api-drip-rate"];
+    const dripRate = parseInt(this.lastResponse.headers["x-ls-api-drip-rate"], 10);
+
+    // Check if dripRate is a valid number greater than 0
+    if (isNaN(dripRate) || dripRate <= 0) {
+      console.error("Invalid drip rate received from API");
+      throw new Error("Invalid drip rate received from API");
+    }
+
     const unitWait = requestUnits - availableUnits;
     const delay = Math.ceil((unitWait / dripRate) * 1000);
     await sleep(delay);
@@ -58,7 +62,16 @@ class LightspeedRetailSDK {
     return unitWait;
   };
 
+  // Get a new token
   getToken = async () => {
+    const now = new Date();
+
+    // Check if the token exists and is still valid
+    if (this.token && this.tokenExpiry > now) {
+      return this.token;
+    }
+
+    // Fetch a new token if needed
     const body = {
       grant_type: "refresh_token",
       client_id: this.clientID,
@@ -76,16 +89,19 @@ class LightspeedRetailSDK {
     }).catch((error) => console.error(error.data));
 
     const tokenData = await response.data;
-    const token = tokenData.access_token;
 
-    return token;
+    // Set token and expiry time
+    this.token = tokenData.access_token;
+    this.tokenExpiry = new Date(now.getTime() + tokenData.expires_in * 1000);
+
+    return this.token;
   };
 
+  // Fetch a resource
   getResource = async (options, retries = 0) => {
-    this.handleRateLimit(options);
+    await this.handleRateLimit(options);
 
     const token = await this.getToken();
-
     if (!token) throw new Error("Error Fetching Token");
 
     options.headers = {
@@ -102,18 +118,30 @@ class LightspeedRetailSDK {
         previous: res.previous,
       };
     } catch (err) {
-      if (retries < this.maxRetries) {
-        console.log(`Error: ${err}, retrying in 2 seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        return await this.getResource(options.url, retries + 1);
+      if (this.isRetryableError(err) && retries < this.maxRetries) {
+        console.log(`Error: ${err.message}, retrying in 2 seconds...`);
+        await sleep(2000);
+        return this.getResource(options, retries + 1);
       } else {
-        console.error(`Failed Request statusText: `, res.statusText);
-        console.log(`Failed data: `, response.data);
+        console.error(`Failed Request statusText: ${err.response?.statusText}`);
+        console.error(`Failed data: ${err.response?.data}`);
         throw err;
       }
     }
   };
 
+  // Check if error is retryable
+  isRetryableError = (err) => {
+    if (!err.response) {
+      // No response (network error or timeout)
+      return true;
+    }
+
+    // Retry for server errors (500-599)
+    return err.response.status >= 500 && err.response.status <= 599;
+  };
+
+  // Get paginated data
   async getAllData(options) {
     let allData = [];
     while (options.url) {
