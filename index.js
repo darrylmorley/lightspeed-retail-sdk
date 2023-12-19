@@ -79,22 +79,26 @@ class LightspeedRetailSDK {
       refresh_token: this.refreshToken,
     };
 
-    const response = await axios({
-      url: "https://cloud.lightspeedapp.com/oauth/access_token.php",
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: JSON.stringify(body),
-    }).catch((error) => console.error(error.data));
+    try {
+      const response = await axios({
+        url: "https://cloud.lightspeedapp.com/oauth/access_token.php",
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify(body),
+      });
 
-    const tokenData = await response.data;
+      const tokenData = await response.data;
 
-    // Set token and expiry time
-    this.token = tokenData.access_token;
-    this.tokenExpiry = new Date(now.getTime() + tokenData.expires_in * 1000);
+      // Set token and expiry time
+      this.token = tokenData.access_token;
+      this.tokenExpiry = new Date(now.getTime() + tokenData.expires_in * 1000);
 
-    return this.token;
+      return this.token;
+    } catch (error) {
+      return this.handleError("GET TOKEN ERROR", error);
+    }
   };
 
   // Fetch a resource
