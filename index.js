@@ -68,9 +68,10 @@ class LightspeedRetailSDK {
   // Get a new token
   getToken = async () => {
     const now = new Date();
+    const bufferTime = 1 * 60 * 1000; // 1 minute buffer
 
     // Check if the token exists and is still valid
-    if (this.token && this.tokenExpiry > now) {
+    if (this.token && this.tokenExpiry.getTime() - now.getTime() > bufferTime) {
       return this.token;
     }
 
