@@ -6,6 +6,9 @@ const getRequestUnits = (operation) => operationUnits[operation] || 10;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class LightspeedRetailSDK {
+  static BASE_URL = "https://api.lightspeedapp.com/API/V3/Account";
+  static TOKEN_URL = "https://cloud.lightspeedapp.com/oauth/access_token.php";
+
   constructor(opts) {
     const { clientID, clientSecret, refreshToken, accountID } = opts;
 
@@ -13,7 +16,8 @@ class LightspeedRetailSDK {
     this.clientSecret = clientSecret;
     this.refreshToken = refreshToken;
     this.accountID = accountID;
-    this.baseUrl = "https://api.lightspeedapp.com/API/V3/Account";
+    this.baseUrl = LightspeedRetailSDK.BASE_URL;
+    this.tokenUrl = LightspeedRetailSDK.TOKEN_URL;
     this.maxRetries = 3;
     this.lastResponse = null;
     this.token = null;
@@ -80,7 +84,7 @@ class LightspeedRetailSDK {
 
     try {
       const response = await axios({
-        url: "https://cloud.lightspeedapp.com/oauth/access_token.php",
+        url: this.tokenUrl,
         method: "post",
         headers: {
           "Content-Type": "application/json",
