@@ -51,8 +51,7 @@ class LightspeedRetailSDK {
 
     // Check if dripRate is a valid number greater than 0
     if (isNaN(dripRate) || dripRate <= 0) {
-      console.error("Invalid drip rate received from API");
-      throw new Error("Invalid drip rate received from API");
+      this.handleError.error("Invalid drip rate received from API");
     }
 
     const unitWait = requestUnits - availableUnits;
@@ -102,37 +101,59 @@ class LightspeedRetailSDK {
   };
 
   // Fetch a resource
-  getResource = async (options, retries = 0) => {
+  executeApiRequest = async (options, retries = 0) => {
     await this.handleRateLimit(options);
 
     const token = await this.getToken();
     if (!token) throw new Error("Error Fetching Token");
 
+    // Set common headers
     options.headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      ...options.headers, // Merge with any additional headers passed in options
     };
 
     try {
       const res = await axios(options);
       this.lastResponse = res;
-      return {
-        data: res.data,
-        next: res.next,
-        previous: res.previous,
-      };
+
+      // Return the data
+      if (options.method === "GET") {
+        return {
+          data: res.data,
+          next: res.next,
+          previous: res.previous,
+        };
+      } else {
+        return res.data; // For POST and PUT, typically just return the data
+      }
     } catch (err) {
       if (this.isRetryableError(err) && retries < this.maxRetries) {
-        console.log(`Error: ${err.message}, retrying in 2 seconds...`);
+        this.handleError(`Network Error Retrying in 2 seconds...`, err.message, false);
         await sleep(2000);
-        return this.getResource(options, retries + 1);
+        return this.executeApiRequest(options, retries + 1);
       } else {
-        console.error(`Failed Request statusText: ${err.response?.statusText}`);
-        console.error(`Failed data: ${err.response?.data}`);
+        this.handleError(`Failed Request statusText: ${err.response?.statusText}`);
+        this.handleError(`Failed data: ${err.response?.data}`);
         throw err;
       }
     }
   };
+
+  // Get paginated data
+  async getAllData(options) {
+    let allData = [];
+    while (options.url) {
+      const { data } = await this.executeApiRequest(options);
+      let next = data["@attributes"].next;
+      let selectDataArray = Object.keys(data)[1];
+      let selectedData = data[selectDataArray];
+      allData = allData.concat(selectedData);
+      options.url = next;
+    }
+    return allData;
+  }
 
   // Check if error is retryable
   isRetryableError = (err) => {
@@ -145,19 +166,15 @@ class LightspeedRetailSDK {
     return err.response.status >= 500 && err.response.status <= 599;
   };
 
-  // Get paginated data
-  async getAllData(options) {
-    let allData = [];
-    while (options.url) {
-      const { data } = await this.getResource(options);
-      let next = data["@attributes"].next;
-      let selectDataArray = Object.keys(data)[1];
-      let selectedData = data[selectDataArray];
-      allData = allData.concat(selectedData);
-      options.url = next;
-    }
-    // console.log(allData);
-    return allData;
+  buildUrl(base, path, queryParams = {}) {
+    const url = new URL(path, base);
+    Object.keys(queryParams).forEach((key) => {
+      if (queryParams[key] != null) {
+        // This will check for both null and undefined
+        url.searchParams.append(key, queryParams[key]);
+      }
+    });
+    return url.toString();
   }
 
   // Get customer by ID
@@ -181,12 +198,21 @@ class LightspeedRetailSDK {
 
   // Get all customers
   async getCustomers(relations) {
+    const queryParams = {};
+    if (relations) {
+      queryParams["load_relations"] = relations;
+    }
+
+    const url = this.buildUrl(
+      this.baseUrl,
+      `/${this.accountID}/Customer.json`,
+      queryParams
+    );
+
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Customer.json`,
+      url: url,
       method: "GET",
     };
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);

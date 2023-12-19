@@ -4,7 +4,7 @@
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "@morley_darryl",
   "license": "ISC",
@@ -21,5 +21,8 @@
   "keywords": [
     "lightspeed retail",
     "node"
-  ]
+  ],
+  "devDependencies": {
+    "dotenv": "^16.3.1"
+  }
 }
