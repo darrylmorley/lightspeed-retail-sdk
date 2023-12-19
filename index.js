@@ -198,21 +198,12 @@ class LightspeedRetailSDK {
 
   // Get all customers
   async getCustomers(relations) {
-    const queryParams = {};
-    if (relations) {
-      queryParams["load_relations"] = relations;
-    }
-
-    const url = this.buildUrl(
-      this.baseUrl,
-      `/${this.accountID}/Customer.json`,
-      queryParams
-    );
-
     const options = {
-      url: url,
+      url: `${this.baseUrl}/${this.accountID}/Customer.json`,
       method: "GET",
     };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
