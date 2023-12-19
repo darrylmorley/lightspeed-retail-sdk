@@ -166,17 +166,6 @@ class LightspeedRetailSDK {
     return err.response.status >= 500 && err.response.status <= 599;
   };
 
-  buildUrl(base, path, queryParams = {}) {
-    const url = new URL(path, base);
-    Object.keys(queryParams).forEach((key) => {
-      if (queryParams[key] != null) {
-        // This will check for both null and undefined
-        url.searchParams.append(key, queryParams[key]);
-      }
-    });
-    return url.toString();
-  }
-
   // Get customer by ID
   async getCustomer(id, relations) {
     const options = {

@@ -1,37 +1,19 @@
 # Another Unofficial Lightspeed Retail V3 API SDK
 
-## Work In Progress
+A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
 
-Constributions Welcome
+## Features
 
-All methods accept relations, these should be provided as strings i.e.: `["relation1", "relation2"]`
-We currently have the following methods available,
+- Easy-to-use methods for interacting with various Lightspeed Retail endpoints.
+- Built-in handling of API rate limits.
+- Automatic token management for authentication.
+- Support for paginated responses from the Lightspeed API.
+- Retry logic for handling transient network issues.
 
-```
-getCustomer(id: int, relations?: string)
-getCustomers(relations?: string)
-getItem(id: int, relations?: string)
-getItems(relations?: string)
-getMultipleItems(ids: string = "[102, 103]", relations?: string)
-getVendorItems(id: int relations?: string)
-getMatrixItems(relations? string)
-getMatrixItem(id: int, relations? string)
-getCategory(id: int, relations?: string)
-getCategories(relations?: string)
-getManufacturer(id: int, relations?: string)
-getManufacturers(relations?: string)
-getOrder(id: int, relations?: string)
-getOrders(relations?: string)
-getOrdersByVendorID(id: int, relations?: string)
-getOpenOrdersByVendorID(id: int, relations?: string)
-getVendor(id: int, relations?: string)
-getVendors(relations?: string)
-getSale(id: int, relations?: string)
-getSales(relations?: string)
-getMultipleSales(ids: string = "[102, 103]", relations?: string)
-getSaleLinesByItem(id: int, relations?: string)
-getSaleLinesByItems(ids: string = `39, 2126, 3505`, startDate?, endDate?, relations?: string)
-getSaleLinesByVendorID(id: int, startDate?, endDate?, relations?: string)
+## Installation
+
+```bash
+npm install lightspeed-retail-sdk
 ```
 
 ## Get started:
@@ -57,6 +39,45 @@ console.log(item);
 
 7497 being the itemID. You can pass required relations as above.
 ```
+
+## Methods
+
+- `getCustomer(id, relations)`: Fetches a specific customer by ID. Optionally, related data can be included.
+- `getCustomers(relations)`: Retrieves all customers. Optionally, related data can be included.
+- `getItem(id, relations)`: Fetches a specific item by ID. Optionally, related data can be included.
+- `getMultipleItems(items, relations)`: Retrieves multiple items by their IDs. Optionally, related data can be included.
+- `getItems(relations)`: Retrieves all items. Optionally, related data can be included.
+- `getvendorItems(vendorID, relations)`: Retrieves all items for a specific vendor. Optionally, related data can be included.
+- `getMatrixItems(relations)`: Fetches all matrix items. Optionally, related data can be included.
+- `getMatrixItem(id, relations)`: Fetches a specific matrix item by ID. Optionally, related data can be included.
+- `getCategory(id, relations)`: Retrieves a specific category by ID. Optionally, related data can be included.
+- `getCategories(relations)`: Retrieves all categories. Optionally, related data can be included.
+- `getManufacturer(id, relations)`: Fetches a specific manufacturer by ID. Optionally, related data can be included.
+- `getManufacturers(relations)`: Retrieves all manufacturers. Optionally, related data can be included.
+- `getOrder(id, relations)`: Fetches a specific order by ID. Optionally, related data can be included.
+- `getOrders(relations)`: Retrieves all orders. Optionally, related data can be included.
+- `getOrdersByVendorID(id, relations)`: Retrieves all orders for a specific vendor. Optionally, related data can be included.
+- `getOpenOrdersByVendorID(id, relations)`: Fetches all open orders for a specific vendor. Optionally, related data can be included.
+- `getVendor(id, relations)`: Fetches a specific vendor by ID. Optionally, related data can be included.
+- `getVendors(relations)`: Retrieves all vendors. Optionally, related data can be included.
+- `getSale(id, relations)`: Fetches a specific sale by ID. Optionally, related data can be included.
+- `getSales(relations)`: Retrieves all sales. Optionally, related data can be included.
+- `getMultipleSales(saleIDs, relations)`: Fetches multiple sales by their IDs. Optionally, related data can be included.
+- `getSaleLinesByItem(itemID, relations)`: Retrieves sale lines for a specific item. Optionally, related data can be included.
+- `getSaleLinesByItems(ids, startDate, endDate, relations)`: Retrieves sale lines for multiple items, filtered by date range. Optionally, related data can be included.
+- `getSaleLinesByVendorID(id, startDate, endDate, relations)`: Fetches sale lines for a specific vendor, filtered by date range. Optionally, related data can be included.
+
+## Contributing
+
+Contributions are welcome!
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Disclaimer
+
+This SDK is not officially affiliated with Lightspeed HQ and is provided "as is" with no warranty.
 
 ## More Info
 
