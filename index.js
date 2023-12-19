@@ -25,12 +25,30 @@ class LightspeedRetailSDK {
   }
 
   // handleError function to handle errors
-  handleError(msg, err, shouldThrow = true) {
-    const errorMessage = `${msg} - ${err.message || err}`;
-    console.error(errorMessage);
+  handleError(context, err, shouldThrow = true) {
+    // Context includes information about where the error occurred
+    const detailedMessage = `Error in ${context}: ${err.message}`;
 
+    // Log the error message
+    console.error(detailedMessage);
+
+    // Log the stack trace if available
+    if (err.stack) {
+      console.error("Stack trace:", err.stack);
+    }
+
+    // If the error has response data, log it
+    if (err.response) {
+      console.error("Error response:", {
+        status: err.response.status,
+        headers: err.response.headers,
+        data: err.response.data,
+      });
+    }
+
+    // Optionally rethrow the error with the detailed message
     if (shouldThrow) {
-      throw new Error(errorMessage);
+      throw new Error(detailedMessage);
     }
   }
 
