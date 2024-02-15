@@ -4,7 +4,7 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 
 ## Update
 
-This package has been enhanced to support both CommonJS and module usage.
+This package has been enhanced to support both CommonJS and module usage. I have also added methods for fetching both a gift card, and all gift cards.
 
 ## Features
 
