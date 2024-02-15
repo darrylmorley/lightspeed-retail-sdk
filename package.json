@@ -1,13 +1,13 @@
 {
   "name": "lightspeed-retail-sdk",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "type": "module",
   "main": "index.cjs",
   "module": "index.mjs",
   "exports": {
     ".": {
-      "require":  "./index.cjs",
+      "require": "./index.cjs",
       "default": "./index.mjs"
     }
   },
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/darrylmorley/lightspeed-retail-sdk"
+    "url": "git+https://github.com/darrylmorley/lightspeed-retail-sdk.git"
   },
   "keywords": [
     "lightspeed retail",
