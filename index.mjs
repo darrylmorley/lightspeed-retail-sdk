@@ -52,6 +52,17 @@ class LightspeedRetailSDK {
     }
   }
 
+    // Check if error is retryable
+    isRetryableError = (err) => {
+      if (!err.response) {
+        // No response (network error or timeout)
+        return true;
+      }
+  
+      // Retry for server errors (500-599)
+      return err.response.status >= 500 && err.response.status <= 599;
+    };
+
   // Update the last response
   setLastResponse = (response) => (this.lastResponse = response);
 
@@ -177,17 +188,6 @@ class LightspeedRetailSDK {
     }
     return allData;
   }
-
-  // Check if error is retryable
-  isRetryableError = (err) => {
-    if (!err.response) {
-      // No response (network error or timeout)
-      return true;
-    }
-
-    // Retry for server errors (500-599)
-    return err.response.status >= 500 && err.response.status <= 599;
-  };
 
   // Get customer by ID
   async getCustomer(id, relations) {

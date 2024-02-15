@@ -641,6 +641,42 @@ class LightspeedRetailSDK {
       return this.handleError("GET SALE ERROR", error);
     }
   }
+
+  // Fetch all Credit Accounts
+  async getGiftCards(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json?giftCard=true`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET CREDIT ACCOUNTS ERROR", error);
+    }
+  }
+
+  // Fetch a Credit Account by ID
+  async getGiftCard(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json?giftCard=true&code=${id}`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide a gift card code");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET CREDIT ACCOUNT ERROR", error);
+    }
+  }
 }
 
 module.exports = LightspeedRetailSDK;
