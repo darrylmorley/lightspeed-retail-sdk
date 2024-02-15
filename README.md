@@ -2,6 +2,10 @@
 
 A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
 
+## Update
+
+I have updated this package so it can be used with either index.cjs or index.mjs for imports.
+
 ## Features
 
 - Easy-to-use methods for interacting with various Lightspeed Retail endpoints.
@@ -19,7 +23,7 @@ npm install lightspeed-retail-sdk
 ## Get started:
 
 ```
-import LightspeedRetailSDK from "lightspeed-retail-sdk";
+import LightspeedRetailSDK from "lightspeed-retail-sdk/index.mjs";
 
 const api = new LightspeedRetailSDK({
   accountID: "Your Account No.",
