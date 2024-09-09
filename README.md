@@ -70,6 +70,7 @@ console.log(item);
 - `getSaleLinesByItem(itemID, relations)`: Retrieves sale lines for a specific item. Optionally, related data can be included.
 - `getSaleLinesByItems(ids, startDate, endDate, relations)`: Retrieves sale lines for multiple items, filtered by date range. Optionally, related data can be included.
 - `getSaleLinesByVendorID(id, startDate, endDate, relations)`: Fetches sale lines for a specific vendor, filtered by date range. Optionally, related data can be included.
+- `getSpecialOrders(relations)`: Fetches special orders. Optionally, related data can be included.
 
 ## Contributing
 
