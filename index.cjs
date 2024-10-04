@@ -69,7 +69,10 @@ class LightspeedRetailSDK {
     const availableUnits = available - used;
     if (requestUnits <= availableUnits) return 0;
 
-    const dripRate = parseInt(this.lastResponse.headers["x-ls-api-drip-rate"], 10);
+    const dripRate = parseInt(
+      this.lastResponse.headers["x-ls-api-drip-rate"],
+      10
+    );
 
     // Check if dripRate is a valid number greater than 0
     if (isNaN(dripRate) || dripRate <= 0) {
@@ -153,11 +156,17 @@ class LightspeedRetailSDK {
       }
     } catch (err) {
       if (this.isRetryableError(err) && retries < this.maxRetries) {
-        this.handleError(`Network Error Retrying in 2 seconds...`, err.message, false);
+        this.handleError(
+          `Network Error Retrying in 2 seconds...`,
+          err.message,
+          false
+        );
         await sleep(2000);
         return this.executeApiRequest(options, retries + 1);
       } else {
-        this.handleError(`Failed Request statusText: ${err.response?.statusText}`);
+        this.handleError(
+          `Failed Request statusText: ${err.response?.statusText}`
+        );
         this.handleError(`Failed data: ${err.response?.data}`);
         throw err;
       }
@@ -225,6 +234,41 @@ class LightspeedRetailSDK {
     }
   }
 
+  async putCustomer(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Customer/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a customerID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT CUSTOMER ERROR", error);
+    }
+  }
+
+  async postCustomer(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Customer.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST CUSTOMER ERROR", error);
+    }
+  }
+
   // Get item by ID
   async getItem(id, relations) {
     const options = {
@@ -282,6 +326,41 @@ class LightspeedRetailSDK {
     }
   }
 
+  async putItem(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a itemID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT ITEM ERROR", error);
+    }
+  }
+
+  async postItem(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST ITEM ERROR", error);
+    }
+  }
+
   // Get all items by vendor
   async getvendorItems(vendorID, relations) {
     const options = {
@@ -296,6 +375,25 @@ class LightspeedRetailSDK {
       return response;
     } catch (error) {
       return this.handleError("GET ITEMS ERROR", error);
+    }
+  }
+
+  // Get Matrix Item by ID
+  async getMatrixItem(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide a itemID");
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEM ERROR", error);
     }
   }
 
@@ -316,22 +414,38 @@ class LightspeedRetailSDK {
     }
   }
 
-  // Get Matrix Item by ID
-  async getMatrixItem(id, relations) {
+  async putMatrixItem(id, data) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
-      method: "GET",
+      method: "PUT",
+      data,
     };
 
     if (!id) return this.handleError("You need to provide a itemID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    if (!data) return this.handleError("You need to provide data");
 
     try {
-      const response = await this.getAllData(options);
+      const response = await this.executeApiRequest(options);
       return response;
     } catch (error) {
-      return this.handleError("GET ITEM ERROR", error);
+      return this.handleError("PUT ITEM ERROR", error);
+    }
+  }
+
+  async postMatrixItem(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/ItemMatrix.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST ITEM ERROR", error);
     }
   }
 
@@ -371,6 +485,41 @@ class LightspeedRetailSDK {
     }
   }
 
+  async putCategory(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Category/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a categoryID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT CATEGORY ERROR", error);
+    }
+  }
+
+  async postCategory(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Category.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST CATEGORY ERROR", error);
+    }
+  }
+
   // Get Manufacturer by ID
   async getManufacturer(id, relations) {
     const options = {
@@ -404,6 +553,41 @@ class LightspeedRetailSDK {
       return response;
     } catch (error) {
       return this.handleError("GET MANUFACTURERS ERROR", error);
+    }
+  }
+
+  async putManufacturer(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Manufacturer/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a manufacturerID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT MANUFACTURER ERROR", error);
+    }
+  }
+
+  async postManufacturer(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Manufacturer.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST MANUFACTURER ERROR", error);
     }
   }
 
@@ -517,6 +701,41 @@ class LightspeedRetailSDK {
     }
   }
 
+  async putVendor(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Vendor/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a vendorID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT VENDOR ERROR", error);
+    }
+  }
+
+  async postVendor(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Vendor.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST VENDOR ERROR", error);
+    }
+  }
+
   // Get sale by ID
   async getSale(id, relations) {
     const options = {
@@ -569,6 +788,41 @@ class LightspeedRetailSDK {
     }
   }
 
+  async putSale(id, data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Sale/${id}.json`,
+      method: "PUT",
+      data,
+    };
+
+    if (!id) return this.handleError("You need to provide a saleID");
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("PUT SALE ERROR", error);
+    }
+  }
+
+  async postSale(data) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Sale.json`,
+      method: "POST",
+      data,
+    };
+
+    if (!data) return this.handleError("You need to provide data");
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("POST SALE ERROR", error);
+    }
+  }
+
   async getSaleLinesByItem(itemID, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=${itemID}`,
@@ -586,14 +840,20 @@ class LightspeedRetailSDK {
   }
 
   // Get sales lines by item ID's and date range
-  async getSaleLinesByItems(ids, startDate = undefined, endDate = undefined, relations) {
+  async getSaleLinesByItems(
+    ids,
+    startDate = undefined,
+    endDate = undefined,
+    relations
+  ) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,[${ids}]`,
       method: "GET",
     };
 
     if (!ids) return this.handleError("You need to provide itemIDs");
-    if (startDate && !endDate) return this.handleError("You need to provide an end date");
+    if (startDate && !endDate)
+      return this.handleError("You need to provide an end date");
     if (endDate && !startDate)
       return this.handleError("You need to provide a start date");
 
@@ -601,7 +861,8 @@ class LightspeedRetailSDK {
 
     if (startDate && endDate)
       options.url =
-        options.url + `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
+        options.url +
+        `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
 
     try {
       const response = await this.getAllData(options);
@@ -626,13 +887,15 @@ class LightspeedRetailSDK {
     };
 
     if (!id) return this.handleError("You need to provide a vendorID");
-    if (startDate && !endDate) return this.handleError("You need to provide an end date");
+    if (startDate && !endDate)
+      return this.handleError("You need to provide an end date");
     if (endDate && !startDate)
       return this.handleError("You need to provide a start date");
 
     if (startDate && endDate)
       options.url =
-        options.url + `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
+        options.url +
+        `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
 
     try {
       const response = await this.getAllData(options);
@@ -682,16 +945,16 @@ class LightspeedRetailSDK {
   async getSpecialOrders(relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/SpecialOrder.json?completed=0`,
-      method: 'GET',
-    }
+      method: "GET",
+    };
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
 
     try {
-      const response = await this.getAllData(options)
-      return response
+      const response = await this.getAllData(options);
+      return response;
     } catch (error) {
-      return this.handleError('GET SPECIAL ORDER ERROR', error)
+      return this.handleError("GET SPECIAL ORDER ERROR", error);
     }
   }
 }
