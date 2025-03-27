@@ -27,28 +27,35 @@ class LightspeedRetailSDK {
   // handleError function to handle errors
   handleError(context, err, shouldThrow = true) {
     // Context includes information about where the error occurred
-    const detailedMessage = `Error in ${context}: ${err.message}`;
+    const errorMessage = err?.message || "Unknown error occurred";
+    const detailedMessage = `Error in ${context}: ${errorMessage}`;
 
     // Log the error message
     console.error(detailedMessage);
 
     // Log the stack trace if available
-    if (err.stack) {
+    if (err?.stack) {
       console.error("Stack trace:", err.stack);
     }
 
     // If the error has response data, log it
-    if (err.response) {
+    if (err?.response) {
       console.error("Error response:", {
-        status: err.response.status,
-        headers: err.response.headers,
-        data: err.response.data,
+        status: err.response?.status,
+        headers: err.response?.headers,
+        data: err.response?.data,
       });
-    }
+    } else if (!err?.response && typeof err === "object") {
+      console.error("Non-response error object:", err);
+    } else if (typeof err === "string") {
+      console.error("Error as string:", err);
+    } else {
+      console.error("Error of unknown type:", err);
 
-    // Optionally rethrow the error with the detailed message
-    if (shouldThrow) {
-      throw new Error(detailedMessage);
+      // Optionally rethrow the error with the detailed message
+      if (shouldThrow) {
+        throw new Error(detailedMessage);
+      }
     }
   }
 
