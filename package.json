@@ -12,10 +12,10 @@
     }
   },
   "scripts": {
-    "test": "node test-sdk.mjs",
-    "test:storage": "node test-storage.mjs",
-    "test:cjs": "node test-cjs.cjs",
-    "test:integration": "node test-integration.mjs",
+    "test": "node tests/test-sdk.mjs",
+    "test:storage": "node tests/test-storage.mjs",
+    "test:cjs": "node tests/test-cjs.cjs",
+    "test:integration": "node tests/test-integration.mjs",
     "test:all": "npm run test && npm run test:storage && npm run test:cjs"
   },
   "author": "https://github.com/darrylmorley",
