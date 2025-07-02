@@ -23,6 +23,8 @@
   },
   "keywords": [
     "lightspeed retail",
-    "node"
+    "node",
+    "oauth",
+    "api"
   ]
 }
