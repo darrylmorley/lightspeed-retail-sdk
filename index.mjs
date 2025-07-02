@@ -7,6 +7,27 @@ const getRequestUnits = (operation) => operationUnits[operation] || 10;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Default in-memory storage (fallback)
+class InMemoryTokenStorage {
+  constructor() {
+    this.tokens = {};
+    console.warn(
+      "⚠️  WARNING: Using InMemoryTokenStorage - tokens will be lost on application restart.\n" +
+        "   With Lightspeed's new OAuth system, refresh tokens are invalidated after each use.\n" +
+        "   Consider implementing persistent storage (FileTokenStorage, database, etc.) for production use.\n" +
+        "   See documentation: https://github.com/darrylmorley/lightspeed-retail-sdk"
+    );
+  }
+
+  async getTokens() {
+    return this.tokens;
+  }
+
+  async setTokens(tokens) {
+    this.tokens = tokens;
+  }
+}
+
 class FileTokenStorage {
   constructor(filePath) {
     this.filePath =
@@ -27,6 +48,25 @@ class FileTokenStorage {
 
   async setTokens(tokens) {
     await fs.writeFile(this.filePath, JSON.stringify(tokens, null, 2));
+  }
+}
+
+class DatabaseTokenStorage {
+  async getTokens() {
+    // Fetch from encrypted database
+    const tokens = await db.query(
+      "SELECT access_token, refresh_token, expires_at FROM oauth_tokens WHERE app_id = ?",
+      [this.appId]
+    );
+    return tokens[0];
+  }
+
+  async setTokens(tokens) {
+    // Store in encrypted database
+    await db.query(
+      "INSERT INTO oauth_tokens (access_token, refresh_token, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE ...",
+      [tokens.access_token, tokens.refresh_token, tokens.expires_at]
+    );
   }
 }
 
@@ -1476,4 +1516,4 @@ class InMemoryTokenStorage {
 }
 
 export default LightspeedRetailSDK;
-export { FileTokenStorage, InMemoryTokenStorage };
+export { FileTokenStorage, InMemoryTokenStorage, DatabaseTokenStorage };

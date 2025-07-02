@@ -51,6 +51,25 @@ class FileTokenStorage {
   }
 }
 
+class DatabaseTokenStorage {
+  async getTokens() {
+    // Fetch from encrypted database
+    const tokens = await db.query(
+      "SELECT access_token, refresh_token, expires_at FROM oauth_tokens WHERE app_id = ?",
+      [this.appId]
+    );
+    return tokens[0];
+  }
+
+  async setTokens(tokens) {
+    // Store in encrypted database
+    await db.query(
+      "INSERT INTO oauth_tokens (access_token, refresh_token, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE ...",
+      [tokens.access_token, tokens.refresh_token, tokens.expires_at]
+    );
+  }
+}
+
 class LightspeedRetailSDK {
   static BASE_URL = "https://api.lightspeedapp.com/API/V3/Account";
   // Update to new OAuth endpoint
@@ -1483,3 +1502,4 @@ class LightspeedRetailSDK {
 module.exports = LightspeedRetailSDK;
 module.exports.FileTokenStorage = FileTokenStorage;
 module.exports.InMemoryTokenStorage = InMemoryTokenStorage;
+module.exports.DatabaseTokenStorage = DatabaseTokenStorage;
