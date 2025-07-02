@@ -3,45 +3,76 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create and pre-populate the FileTokenStorage
-const tokenStorage = new FileTokenStorage("./tests/live-tokens.json");
-
-// Pre-populate with current tokens
-await tokenStorage.setTokens({
-  access_token: process.env.LIGHTSPEED_ACCESS_TOKEN,
-  refresh_token: process.env.LIGHTSPEED_REFRESH_TOKEN,
-  expires_at:
-    process.env.LIGHTSPEED_TOKEN_EXPIRES_AT ||
-    new Date(Date.now() + 3600000).toISOString(),
-  expires_in: 3600,
-});
-
-const api = new LightspeedRetailSDK({
-  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
-  clientID: process.env.LIGHTSPEED_CLIENT_ID,
-  clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
-  refreshToken: process.env.LIGHTSPEED_REFRESH_TOKEN,
-  tokenStorage: tokenStorage,
-});
-
 async function testSDK() {
   console.log("🚀 Testing Lightspeed Retail SDK v4.0.0\n");
 
-  // Check if we have the required credentials
-  if (
-    !process.env.LIGHTSPEED_ACCESS_TOKEN ||
-    !process.env.LIGHTSPEED_REFRESH_TOKEN
-  ) {
-    console.log(
-      "⚠️  Missing LIGHTSPEED_ACCESS_TOKEN or LIGHTSPEED_REFRESH_TOKEN in .env file"
-    );
-    console.log("Please add both tokens from your initial OAuth response");
-    return;
-  }
-
   try {
+    // Create FileTokenStorage instance
+    const tokenStorage = new FileTokenStorage("./tests/live-tokens.json");
+
+    // Try to get existing tokens from file storage first
+    let storedTokens = await tokenStorage.getTokens();
+    console.log("🔍 Checking for stored tokens...");
+
+    const hasStoredTokens =
+      storedTokens.access_token && storedTokens.refresh_token;
+
+    if (hasStoredTokens) {
+      console.log("✅ Found stored tokens, using them");
+    } else {
+      console.log(
+        "⚠️  No stored tokens found, checking environment variables..."
+      );
+
+      // Check if we have env vars to populate storage
+      if (
+        process.env.LIGHTSPEED_ACCESS_TOKEN &&
+        process.env.LIGHTSPEED_REFRESH_TOKEN
+      ) {
+        console.log("✅ Found environment tokens, storing them");
+
+        // Populate storage with env vars
+        await tokenStorage.setTokens({
+          access_token: process.env.LIGHTSPEED_ACCESS_TOKEN,
+          refresh_token: process.env.LIGHTSPEED_REFRESH_TOKEN,
+          expires_at:
+            process.env.LIGHTSPEED_TOKEN_EXPIRES_AT ||
+            new Date(Date.now() + 3600000).toISOString(),
+          expires_in: 3600,
+        });
+
+        storedTokens = await tokenStorage.getTokens();
+      } else {
+        console.log("⚠️  No credentials found - skipping API tests");
+        console.log(
+          "Please add tokens to your .env file from your initial OAuth response"
+        );
+        return;
+      }
+    }
+
+    // Check if we have the minimum required credentials
+    if (
+      !process.env.LIGHTSPEED_ACCOUNT_ID ||
+      !process.env.LIGHTSPEED_CLIENT_ID
+    ) {
+      console.log(
+        "⚠️  Missing LIGHTSPEED_ACCOUNT_ID or LIGHTSPEED_CLIENT_ID in .env file"
+      );
+      return;
+    }
+
+    // Create API instance with stored tokens
+    const api = new LightspeedRetailSDK({
+      accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+      clientID: process.env.LIGHTSPEED_CLIENT_ID,
+      clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
+      refreshToken: process.env.LIGHTSPEED_REFRESH_TOKEN,
+      tokenStorage: tokenStorage,
+    });
+
     // Test 1: Check token info first
-    console.log("1. Checking token status...");
+    console.log("\n1. Checking token status...");
     const tokenInfo = await api.getTokenInfo();
     console.log("✅ Token info:", tokenInfo);
 
@@ -57,7 +88,7 @@ async function testSDK() {
 
     // Test 4: Get a few items
     console.log("\n4. Testing items endpoint...");
-    const items = await api.getItems("", 10);
+    const items = await api.getItems(null, 10);
     console.log(`✅ Retrieved ${items?.length || 0} items`);
 
     // Test 5: Test token refresh (only if needed)
@@ -69,6 +100,9 @@ async function testSDK() {
     );
 
     console.log("\n🎉 All tests passed!");
+    console.log(
+      "💾 Your tokens are stored in ./tests/live-tokens.json for future use"
+    );
   } catch (error) {
     console.error("❌ Test failed:", error.message);
 

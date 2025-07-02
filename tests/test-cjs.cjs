@@ -42,31 +42,9 @@ async function testCJS() {
 
         storedTokens = await tokenStorage.getTokens();
       } else {
-        console.log(
-          "⚠️  No credentials found - testing basic instantiation only"
-        );
-
-        // Basic structure test without API calls
-        const api = new LightspeedRetailSDK({
-          accountID: "test",
-          clientID: "test",
-          clientSecret: "test",
-          refreshToken: "test",
-        });
-
-        console.log("✅ CommonJS SDK instance created successfully");
-        console.log(
-          "✅ CommonJS SDK has required methods:",
-          typeof api.getItems === "function"
-        );
-        console.log(
-          "✅ FileTokenStorage exported:",
-          typeof FileTokenStorage === "function"
-        );
-
-        console.log(
-          "\n💡 Add credentials to .env file or run ES module test first to populate tokens"
-        );
+        console.log("⚠️  No credentials found - skipping CommonJS API tests");
+        console.log("💡 Run the ES module test first: npm run test");
+        console.log("   Or add credentials to your .env file");
         return;
       }
     }
@@ -100,7 +78,7 @@ async function testCJS() {
     console.log("✅ CommonJS ping result:", pingResult.status);
 
     console.log("\n3. Testing items endpoint...");
-    const items = await api.getItems(null, 5); // Get 5 items
+    const items = await api.getItems(null, 5);
     console.log(`✅ Retrieved ${items?.length || 0} items via CommonJS`);
 
     console.log("\n4. Testing account info...");
@@ -108,9 +86,6 @@ async function testCJS() {
     console.log("✅ Account loaded:", account?.Account?.name || "Success");
 
     console.log("\n🎉 All CommonJS tests passed!");
-    console.log(
-      "💾 Tokens are stored in ./tests/cjs-tokens.json for future use"
-    );
   } catch (error) {
     console.error("❌ CommonJS test failed:", error.message);
 
@@ -118,9 +93,6 @@ async function testCJS() {
       console.log("\n💡 Troubleshooting:");
       console.log("1. Run the ES module test first: npm run test");
       console.log("2. Or add tokens to your .env file");
-      console.log(
-        "3. Check that ./tests/live-tokens.json exists and has valid tokens"
-      );
     }
   }
 }
