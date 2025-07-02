@@ -19,7 +19,7 @@ const tests = [
   },
   {
     name: "Get Items",
-    test: (api) => api.getItems(),
+    test: (api) => api.getItems("", 10),
   },
   {
     name: "Get Categories",
