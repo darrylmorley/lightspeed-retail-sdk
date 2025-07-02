@@ -7,10 +7,17 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class LightspeedRetailSDK {
   static BASE_URL = "https://api.lightspeedapp.com/API/V3/Account";
-  static TOKEN_URL = "https://cloud.lightspeedapp.com/oauth/access_token.php";
+  // Update to new OAuth endpoint
+  static TOKEN_URL = "https://cloud.lightspeedapp.com/auth/oauth/token";
 
   constructor(opts) {
-    const { clientID, clientSecret, refreshToken, accountID } = opts;
+    const {
+      clientID,
+      clientSecret,
+      refreshToken,
+      accountID,
+      tokenStorage, // New parameter for token storage
+    } = opts;
 
     this.clientID = clientID;
     this.clientSecret = clientSecret;
@@ -22,6 +29,9 @@ class LightspeedRetailSDK {
     this.lastResponse = null;
     this.token = null;
     this.tokenExpiry = null;
+
+    // Token storage interface - defaults to in-memory if not provided
+    this.tokenStorage = tokenStorage || new InMemoryTokenStorage();
   }
 
   // handleError function to handle errors
@@ -109,17 +119,31 @@ class LightspeedRetailSDK {
     const now = new Date();
     const bufferTime = 1 * 60 * 1000; // 1 minute buffer
 
-    // Check if the token exists and is still valid
-    if (this.token && this.tokenExpiry.getTime() - now.getTime() > bufferTime) {
-      return this.token;
+    // Load tokens from storage
+    const storedTokens = await this.tokenStorage.getTokens();
+
+    // Check if we have a valid cached token
+    if (storedTokens.access_token && storedTokens.expires_at) {
+      const expiryTime = new Date(storedTokens.expires_at);
+      if (expiryTime.getTime() - now.getTime() > bufferTime) {
+        this.token = storedTokens.access_token;
+        return this.token;
+      }
     }
 
-    // Fetch a new token if needed
+    // Use stored refresh token or fallback to constructor value
+    const refreshToken = storedTokens.refresh_token || this.refreshToken;
+
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    // Fetch a new token pair
     const body = {
       grant_type: "refresh_token",
       client_id: this.clientID,
       client_secret: this.clientSecret,
-      refresh_token: this.refreshToken,
+      refresh_token: refreshToken,
     };
 
     try {
@@ -129,14 +153,25 @@ class LightspeedRetailSDK {
         headers: {
           "Content-Type": "application/json",
         },
-        data: JSON.stringify(body),
+        data: body, // Send as JSON object, not stringified
       });
 
-      const tokenData = await response.data;
+      const tokenData = response.data;
 
-      // Set token and expiry time
+      // Calculate expiry time
+      const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000);
+
+      // Store both tokens
+      await this.tokenStorage.setTokens({
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: expiresAt.toISOString(),
+        expires_in: tokenData.expires_in,
+      });
+
+      // Update instance properties
       this.token = tokenData.access_token;
-      this.tokenExpiry = new Date(now.getTime() + tokenData.expires_in * 1000);
+      this.tokenExpiry = expiresAt;
 
       return this.token;
     } catch (error) {
@@ -1029,6 +1064,21 @@ class LightspeedRetailSDK {
     } catch (error) {
       return this.handleError("POST IMAGE ERROR", error);
     }
+  }
+}
+
+// Default in-memory storage (fallback)
+class InMemoryTokenStorage {
+  constructor() {
+    this.tokens = {};
+  }
+
+  async getTokens() {
+    return this.tokens;
+  }
+
+  async setTokens(tokens) {
+    this.tokens = tokens;
   }
 }
 
