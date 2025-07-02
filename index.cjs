@@ -1086,6 +1086,319 @@ class LightspeedRetailSDK {
       return this.handleError("POST IMAGE ERROR", error);
     }
   }
+
+  // Shop/Account information
+  async getAccount(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ACCOUNT ERROR", error);
+    }
+  }
+
+  // Employee management
+  async getEmployees(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Employee.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET EMPLOYEES ERROR", error);
+    }
+  }
+
+  async getEmployee(id, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Employee/${id}.json`,
+      method: "GET",
+    };
+
+    if (!id) return this.handleError("You need to provide an employeeID");
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.executeApiRequest(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET EMPLOYEE ERROR", error);
+    }
+  }
+
+  // Customer Types
+  async getCustomerTypes(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/CustomerType.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET CUSTOMER TYPES ERROR", error);
+    }
+  }
+
+  // Registers/Shops
+  async getRegisters(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Register.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET REGISTERS ERROR", error);
+    }
+  }
+
+  // Payment Types
+  async getPaymentTypes(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/PaymentType.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET PAYMENT TYPES ERROR", error);
+    }
+  }
+
+  // Tax Classes
+  async getTaxClasses(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/TaxClass.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET TAX CLASSES ERROR", error);
+    }
+  }
+
+  // Item Attributes
+  async getItemAttributes(relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/ItemAttribute.json`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `?load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEM ATTRIBUTES ERROR", error);
+    }
+  }
+
+  // Advanced search methods
+  async searchItems(searchTerm, relations) {
+    const options = {
+      url: `${this.baseUrl}/${
+        this.accountID
+      }/Item.json?description=~,${encodeURIComponent(searchTerm)}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("SEARCH ITEMS ERROR", error);
+    }
+  }
+
+  async searchCustomers(searchTerm, relations) {
+    const encodedTerm = encodeURIComponent(searchTerm);
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Customer.json?or=firstName=~,${encodedTerm}||lastName=~,${encodedTerm}||email=~,${encodedTerm}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("SEARCH CUSTOMERS ERROR", error);
+    }
+  }
+
+  // Date range queries
+  async getSalesByDateRange(startDate, endDate, relations) {
+    if (!startDate || !endDate) {
+      return this.handleError("You need to provide both start and end dates");
+    }
+
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Sale.json?timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET SALES BY DATE RANGE ERROR", error);
+    }
+  }
+
+  async getItemsByCategory(categoryId, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json?categoryID=${categoryId}`,
+      method: "GET",
+    };
+
+    if (!categoryId)
+      return this.handleError("You need to provide a categoryID");
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET ITEMS BY CATEGORY ERROR", error);
+    }
+  }
+
+  // Inventory methods
+  async getItemsWithLowStock(threshold = 5, relations) {
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json?qoh=<,${threshold}`,
+      method: "GET",
+    };
+
+    if (relations) options.url = options.url + `&load_relations=${relations}`;
+
+    try {
+      const response = await this.getAllData(options);
+      return response;
+    } catch (error) {
+      return this.handleError("GET LOW STOCK ITEMS ERROR", error);
+    }
+  }
+
+  // Bulk operations
+  async updateMultipleItems(updates) {
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return this.handleError("You need to provide an array of item updates");
+    }
+
+    const results = [];
+    for (const update of updates) {
+      if (!update.itemID || !update.data) {
+        results.push({ error: "Missing itemID or data", update });
+        continue;
+      }
+
+      try {
+        const result = await this.putItem(update.itemID, update.data);
+        results.push({ success: true, itemID: update.itemID, result });
+      } catch (error) {
+        results.push({ error: error.message, itemID: update.itemID });
+      }
+    }
+
+    return results;
+  }
+
+  // Utility methods
+  async ping() {
+    try {
+      const response = await this.getAccount();
+      return {
+        status: "success",
+        message: "API connection successful",
+        data: response,
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        message: "API connection failed",
+        error: error.message,
+      };
+    }
+  }
+
+  // Token management utilities
+  async refreshTokens() {
+    try {
+      // Force a token refresh by clearing the current token
+      this.token = null;
+      this.tokenExpiry = null;
+
+      const newToken = await this.getToken();
+      return { success: true, message: "Tokens refreshed successfully" };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Token refresh failed",
+        error: error.message,
+      };
+    }
+  }
+
+  async getTokenInfo() {
+    const storedTokens = await this.tokenStorage.getTokens();
+    return {
+      hasAccessToken: !!storedTokens.access_token,
+      hasRefreshToken: !!storedTokens.refresh_token,
+      expiresAt: storedTokens.expires_at,
+      isExpired: storedTokens.expires_at
+        ? new Date(storedTokens.expires_at) < new Date()
+        : null,
+    };
+  }
+
+  // Helper method for content type detection (for image uploads)
+  getContentType(filename) {
+    const ext = filename.toLowerCase().split(".").pop();
+    const contentTypes = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+    };
+    return contentTypes[ext] || "application/octet-stream";
+  }
 }
 
 module.exports = LightspeedRetailSDK;
