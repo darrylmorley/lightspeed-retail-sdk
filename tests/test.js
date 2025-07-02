@@ -1,4 +1,4 @@
-import LightspeedRetailSDK, { FileTokenStorage } from "../index.mjs";
+import LightspeedRetailSDK, { FileTokenStorage } from "../dist/index.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();

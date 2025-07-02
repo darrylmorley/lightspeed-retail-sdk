@@ -3,21 +3,33 @@
   "version": "3.0.0",
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "type": "module",
-  "main": "index.cjs",
-  "module": "index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
   "exports": {
     ".": {
-      "require": "./index.cjs",
-      "default": "./index.mjs"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
     }
   },
   "scripts": {
     "test": "node tests/test.js",
     "test:storage": "node tests/test-storage.mjs",
-    "test:cjs": "node tests/test-cjs.cjs",
-    "test:integration": "node tests/test-integration.mjs",
-    "test:all": "npm run test && npm run test:storage && npm run test:cjs"
+    "test:all": "npm run test && npm run test && npm run test:storage",
+    "build": "npm run clean && npm run build:core && npm run build:storage && npm run build:main && npm run build:copy",
+    "build:core": "babel src/core/LightspeedSDK.mjs --out-file dist/core/LightspeedSDK.cjs",
+    "build:storage": "babel src/storage/TokenStorage.mjs --out-file dist/storage/TokenStorage.cjs",
+    "build:main": "babel index.mjs --out-file dist/index.cjs",
+    "build:copy": "cp index.mjs dist/index.mjs && cp -r src dist/",
+    "prebuild": "mkdir -p dist/core dist/storage",
+    "clean": "rm -rf dist",
+    "watch": "babel src --watch --out-dir dist --extensions .mjs",
+    "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "author": "https://github.com/darrylmorley",
   "license": "MIT",
   "dependencies": {
@@ -33,5 +45,11 @@
     "node",
     "oauth",
     "api"
-  ]
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.28.0",
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.28.0"
+  }
 }

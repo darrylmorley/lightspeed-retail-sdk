@@ -1,5 +1,5 @@
-const LightspeedRetailSDK = require("../index.cjs");
-const { FileTokenStorage } = require("../index.cjs");
+const LightspeedRetailSDK = require("../dist/index.cjs");
+const { FileTokenStorage } = require("../dist/index.cjs");
 require("dotenv").config();
 
 async function testCJS() {
