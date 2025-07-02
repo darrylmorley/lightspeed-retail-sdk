@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "test": "node tests/test-sdk.mjs",
+    "test": "node tests/test.js",
     "test:storage": "node tests/test-storage.mjs",
     "test:cjs": "node tests/test-cjs.cjs",
     "test:integration": "node tests/test-integration.mjs",

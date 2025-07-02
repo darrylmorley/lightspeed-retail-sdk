@@ -5,12 +5,10 @@ async function testCJS() {
 
   try {
     const api = new LightspeedRetailSDK({
-      accountID: process.env.LIGHTSPEED_ACCOUNT_ID || "YOUR_ACCOUNT_ID",
-      clientID: process.env.LIGHTSPEED_CLIENT_ID || "YOUR_CLIENT_ID",
-      clientSecret:
-        process.env.LIGHTSPEED_CLIENT_SECRET || "YOUR_CLIENT_SECRET",
-      refreshToken:
-        process.env.LIGHTSPEED_REFRESH_TOKEN || "YOUR_REFRESH_TOKEN",
+      accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+      clientID: process.env.LIGHTSPEED_CLIENT_ID,
+      clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
+      refreshToken: process.env.LIGHTSPEED_REFRESH_TOKEN,
     });
 
     const pingResult = await api.ping();

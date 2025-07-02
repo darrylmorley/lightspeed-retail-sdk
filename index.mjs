@@ -211,11 +211,10 @@ class LightspeedRetailSDK {
     const token = await this.getToken();
     if (!token) throw new Error("Error Fetching Token");
 
-    // Set common headers
     options.headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      ...options.headers, // Merge with any additional headers passed in options
+      ...options.headers,
     };
 
     try {
@@ -226,13 +225,35 @@ class LightspeedRetailSDK {
       if (options.method === "GET") {
         return {
           data: res.data,
-          next: res.next,
-          previous: res.previous,
+          next: res.data["@attributes"]?.next,
+          previous: res.data["@attributes"]?.prev,
         };
       } else {
-        return res.data; // For POST and PUT, typically just return the data
+        return res.data;
       }
     } catch (err) {
+      // Handle 401 auth errors with automatic retry
+      if (err.response?.status === 401 && !options._authRetryAttempted) {
+        console.log("🔄 401 error - forcing token refresh and retrying...");
+
+        // Mark this request as having attempted auth retry
+        options._authRetryAttempted = true;
+
+        // Force refresh by clearing cached token
+        this.token = null;
+
+        // Try to refresh tokens
+        try {
+          await this.refreshTokens();
+          // Retry the request with fresh token
+          return this.executeApiRequest(options, retries);
+        } catch (refreshError) {
+          console.error("Failed to refresh tokens:", refreshError.message);
+          throw refreshError;
+        }
+      }
+
+      // Handle retryable errors (network issues, 5xx errors)
       if (this.isRetryableError(err) && retries < this.maxRetries) {
         this.handleError(
           `Network Error Retrying in 2 seconds...`,
@@ -425,38 +446,51 @@ class LightspeedRetailSDK {
   }
 
   // Get all items
-  async getItems(relations) {
+  async getItems(relations, limit = null) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    if (relations) {
+      searchParams.append("load_relations", relations);
+    }
+
+    if (limit) {
+      searchParams.append("limit", Math.min(limit, 100));
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      if (limit) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+
+        // Handle different response structures
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       return this.handleError("GET ITEMS ERROR", error);
-    }
-  }
-
-  // Update item by ID
-  async putItem(id, data) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Item/${id}.json`,
-      method: "PUT",
-      data,
-    };
-
-    if (!id) return this.handleError("You need to provide a itemID");
-    if (!data) return this.handleError("You need to provide data");
-
-    try {
-      const response = await this.executeApiRequest(options);
-      return response;
-    } catch (error) {
-      return this.handleError("PUT ITEM ERROR", error);
     }
   }
 
