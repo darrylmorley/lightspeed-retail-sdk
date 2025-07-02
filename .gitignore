@@ -1,8 +1,10 @@
 node_modules/
+dist/
 .env
 *.log
 .DS_Store
+.lightspeed-tokens.json
 tests/live-tokens.json
 tests/test-tokens.json
 tests/integration-tokens.json
-.lightspeed-tokens.json
+tests/test-storage.json
