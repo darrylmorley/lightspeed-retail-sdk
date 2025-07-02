@@ -37,16 +37,15 @@ npm install lightspeed-retail-sdk
 ### Basic Usage (In-Memory Storage)
 
 ```javascript
-import LightspeedRetailSDK from "lightspeed-retail-sdk";
+import LightspeedRetailSDK, { FileTokenStorage } from "lightspeed-retail-sdk";
 
 const api = new LightspeedRetailSDK({
   accountID: "Your Account No.",
   clientID: "Your client ID.",
   clientSecret: "Your client secret.",
-  refreshToken: "Your refresh token.",
+  refreshToken: "Your initial refresh token.",
+  tokenStorage: new FileTokenStorage("./lightspeed-tokens.json"),
 });
-
-export default api;
 ```
 
 ⚠️ **Warning**: Basic usage stores tokens in memory only. Tokens will be lost on application restart, which may cause issues with Lightspeed's new token rotation system.
@@ -182,7 +181,7 @@ If you're upgrading from a previous version:
 - `getMultipleItems(items, relations)` - Get multiple items by IDs
 - `putItem(id, data)` - Update an item
 - `postItem(data)` - Create a new item
-- `getvendorItems(vendorID, relations)` - Get items by vendor
+- `getVendorItems(vendorID, relations)` - Get items by vendor
 - `searchItems(searchTerm, relations)` - Search items by description
 - `getItemsByCategory(categoryId, relations)` - Get items in a category
 - `getItemsWithLowStock(threshold, relations)` - Get items below stock threshold

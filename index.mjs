@@ -479,7 +479,7 @@ class LightspeedRetailSDK {
   }
 
   // Get all items by vendor
-  async getvendorItems(vendorID, relations) {
+  async getVendorItems(vendorID, relations) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json?defaultVendorID=${vendorID}`,
       method: "GET",
