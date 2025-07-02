@@ -104,84 +104,215 @@ const api = new LightspeedRetailSDK({
 export default api;
 ```
 
-#### Custom Storage (Database Example)
+#### Database Storage (Built-in Base Class)
+
+The SDK provides a `DatabaseTokenStorage` base class that you can extend:
 
 ```javascript
-import LightspeedRetailSDK from "lightspeed-retail-sdk";
+import LightspeedRetailSDK, {
+  DatabaseTokenStorage,
+} from "lightspeed-retail-sdk";
+import mysql from "mysql2/promise";
 
-class DatabaseTokenStorage {
-  constructor(userId) {
+class MySQLTokenStorage extends DatabaseTokenStorage {
+  constructor(connectionConfig, userId) {
+    super();
+    this.config = connectionConfig;
     this.userId = userId;
   }
 
   async getTokens() {
-    const user = await db.users.findById(this.userId);
-    return {
-      access_token: user.lightspeed_access_token,
-      refresh_token: user.lightspeed_refresh_token,
-      expires_at: user.lightspeed_token_expires_at,
-    };
+    const connection = await mysql.createConnection(this.config);
+    try {
+      const [rows] = await connection.execute(
+        "SELECT access_token, refresh_token, expires_at FROM user_tokens WHERE user_id = ?",
+        [this.userId]
+      );
+
+      if (rows.length === 0) {
+        return { access_token: null, refresh_token: null, expires_at: null };
+      }
+
+      return {
+        access_token: rows[0].access_token,
+        refresh_token: rows[0].refresh_token,
+        expires_at: rows[0].expires_at,
+      };
+    } finally {
+      await connection.end();
+    }
   }
 
   async setTokens(tokens) {
-    await db.users.update(this.userId, {
-      lightspeed_access_token: tokens.access_token,
-      lightspeed_refresh_token: tokens.refresh_token,
-      lightspeed_token_expires_at: tokens.expires_at,
-    });
+    const connection = await mysql.createConnection(this.config);
+    try {
+      await connection.execute(
+        `INSERT INTO user_tokens (user_id, access_token, refresh_token, expires_at, updated_at) 
+         VALUES (?, ?, ?, ?, NOW()) 
+         ON DUPLICATE KEY UPDATE 
+         access_token = VALUES(access_token),
+         refresh_token = VALUES(refresh_token),
+         expires_at = VALUES(expires_at),
+         updated_at = NOW()`,
+        [
+          this.userId,
+          tokens.access_token,
+          tokens.refresh_token,
+          tokens.expires_at,
+        ]
+      );
+    } finally {
+      await connection.end();
+    }
   }
 }
+
+// Usage
+const dbConfig = {
+  host: "localhost",
+  user: "your_user",
+  password: "your_password",
+  database: "your_database",
+};
 
 const api = new LightspeedRetailSDK({
   accountID: "Your Account No.",
   clientID: "Your client ID.",
   clientSecret: "Your client secret.",
   refreshToken: "Your initial refresh token.",
-  tokenStorage: new DatabaseTokenStorage(userId),
+  tokenStorage: new MySQLTokenStorage(dbConfig, "user123"),
 });
 ```
 
-## Example Requests
+#### PostgreSQL Example
 
 ```javascript
-// Basic item request
-const item = await api.getItem(7947, '["Category", "Images"]');
-console.log(item);
+import { DatabaseTokenStorage } from "lightspeed-retail-sdk";
+import pg from "pg";
 
-// Get all items
-const allItems = await api.getItems();
+class PostgreSQLTokenStorage extends DatabaseTokenStorage {
+  constructor(connectionString, userId) {
+    super();
+    this.connectionString = connectionString;
+    this.userId = userId;
+  }
 
-// Get limited number of items
-const firstTenItems = await api.getItems(null, 10);
+  async getTokens() {
+    const client = new pg.Client(this.connectionString);
+    await client.connect();
 
-// Search for items
-const searchResults = await api.searchItems("iPhone", '["Category"]');
+    try {
+      const result = await client.query(
+        "SELECT access_token, refresh_token, expires_at FROM user_tokens WHERE user_id = $1",
+        [this.userId]
+      );
 
-// Get low stock items
-const lowStockItems = await api.getItemsWithLowStock(10, '["Category"]');
+      if (result.rows.length === 0) {
+        return { access_token: null, refresh_token: null, expires_at: null };
+      }
 
-// Bulk update items
-const updates = [
-  { itemID: 123, data: { description: "Updated description" } },
-  { itemID: 456, data: { qoh: 50 } },
-];
-const results = await api.updateMultipleItems(updates);
+      const row = result.rows[0];
+      return {
+        access_token: row.access_token,
+        refresh_token: row.refresh_token,
+        expires_at: row.expires_at,
+      };
+    } finally {
+      await client.end();
+    }
+  }
 
-// Check API connection
-const status = await api.ping();
-console.log(status);
+  async setTokens(tokens) {
+    const client = new pg.Client(this.connectionString);
+    await client.connect();
 
-// Check API connection
-const status = await api.ping();
-console.log(status);
+    try {
+      await client.query(
+        `INSERT INTO user_tokens (user_id, access_token, refresh_token, expires_at, updated_at) 
+         VALUES ($1, $2, $3, $4, NOW()) 
+         ON CONFLICT (user_id) DO UPDATE SET 
+         access_token = EXCLUDED.access_token,
+         refresh_token = EXCLUDED.refresh_token,
+         expires_at = EXCLUDED.expires_at,
+         updated_at = NOW()`,
+        [
+          this.userId,
+          tokens.access_token,
+          tokens.refresh_token,
+          tokens.expires_at,
+        ]
+      );
+    } finally {
+      await client.end();
+    }
+  }
+}
 ```
 
-## Token Storage Options
+#### MongoDB Example
 
-### Built-in Storage Classes
+```javascript
+import { DatabaseTokenStorage } from "lightspeed-retail-sdk";
+import { MongoClient } from "mongodb";
 
-1. **InMemoryTokenStorage** (default) - Stores tokens in memory only
-2. **FileTokenStorage** - Stores tokens in a JSON file
+class MongoTokenStorage extends DatabaseTokenStorage {
+  constructor(connectionString, databaseName, userId) {
+    super();
+    this.connectionString = connectionString;
+    this.databaseName = databaseName;
+    this.userId = userId;
+  }
+
+  async getTokens() {
+    const client = new MongoClient(this.connectionString);
+    await client.connect();
+
+    try {
+      const db = client.db(this.databaseName);
+      const collection = db.collection("user_tokens");
+
+      const doc = await collection.findOne({ userId: this.userId });
+
+      if (!doc) {
+        return { access_token: null, refresh_token: null, expires_at: null };
+      }
+
+      return {
+        access_token: doc.access_token,
+        refresh_token: doc.refresh_token,
+        expires_at: doc.expires_at,
+      };
+    } finally {
+      await client.close();
+    }
+  }
+
+  async setTokens(tokens) {
+    const client = new MongoClient(this.connectionString);
+    await client.connect();
+
+    try {
+      const db = client.db(this.databaseName);
+      const collection = db.collection("user_tokens");
+
+      await collection.updateOne(
+        { userId: this.userId },
+        {
+          $set: {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            expires_at: tokens.expires_at,
+            updated_at: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+    } finally {
+      await client.close();
+    }
+  }
+}
+```
 
 ### Custom Storage Interface
 
@@ -191,12 +322,66 @@ Implement your own storage by creating a class with these methods:
 class CustomTokenStorage {
   async getTokens() {
     // Return an object with: { access_token, refresh_token, expires_at }
+    // Return null values if no tokens are stored
   }
 
   async setTokens(tokens) {
     // Store the tokens object: { access_token, refresh_token, expires_at, expires_in }
   }
 }
+```
+
+### Database Schema Examples
+
+#### MySQL/PostgreSQL Schema
+
+```sql
+CREATE TABLE user_tokens (
+  user_id VARCHAR(255) PRIMARY KEY,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### MongoDB Schema
+
+```javascript
+// No strict schema required, but documents will look like:
+{
+  _id: ObjectId("..."),
+  userId: "user123",
+  access_token: "eyJ0eXAiOiJKV1Q...",
+  refresh_token: "def5020058aac34d...",
+  expires_at: "2025-07-02T16:09:42.069Z",
+  created_at: ISODate("2025-07-02T15:09:42.069Z"),
+  updated_at: ISODate("2025-07-02T15:09:42.069Z")
+}
+```
+
+## CommonJS Usage
+
+The SDK supports both ES modules and CommonJS:
+
+### ES Modules (Recommended)
+
+```javascript
+import LightspeedRetailSDK, {
+  FileTokenStorage,
+  DatabaseTokenStorage,
+} from "lightspeed-retail-sdk";
+```
+
+### CommonJS
+
+```javascript
+const LightspeedRetailSDK = require("lightspeed-retail-sdk");
+const {
+  FileTokenStorage,
+  DatabaseTokenStorage,
+} = require("lightspeed-retail-sdk");
 ```
 
 ## Migration from Previous Versions
