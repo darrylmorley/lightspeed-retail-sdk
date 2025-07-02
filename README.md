@@ -2,10 +2,16 @@
 
 A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
 
-## Update
+## 🚨 Important Update - New OAuth System
 
-- This package has been enhanced to support both CommonJS and module usage. I have also added methods for fetching both a gift card, and all gift cards.
-- I've added PUT and POST methods to many of the domains now.
+**Lightspeed has implemented a new OAuth authorization server.** This SDK has been updated to support the new endpoints and token rotation system.
+
+### Key Changes
+
+- **New OAuth endpoints** - Updated to use `https://cloud.lightspeedapp.com/auth/oauth/token`
+- **Token rotation** - Both access and refresh tokens now change with each refresh
+- **Token persistence** - Tokens must be stored between application restarts
+- **Longer token values** - Ensure your storage can handle the new token lengths
 
 ## Features
 
@@ -14,6 +20,8 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 - Automatic token management for authentication.
 - Support for paginated responses from the Lightspeed API.
 - Retry logic for handling transient network issues.
+- **NEW: Flexible token storage** - File-based, database, or custom storage options.
+- Support for both CommonJS and ES modules.
 
 ## Installation
 
@@ -21,9 +29,11 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 npm install lightspeed-retail-sdk
 ```
 
-## Get started:
+## Quick Start
 
-```
+### Basic Usage (In-Memory Storage)
+
+```javascript
 import LightspeedRetailSDK from "lightspeed-retail-sdk";
 
 const api = new LightspeedRetailSDK({
@@ -33,17 +43,106 @@ const api = new LightspeedRetailSDK({
   refreshToken: "Your refresh token.",
 });
 
-export default api
+export default api;
+```
+
+⚠️ **Warning**: Basic usage stores tokens in memory only. Tokens will be lost on application restart, which may cause issues with Lightspeed's new token rotation system.
+
+### Recommended Usage (Persistent Storage)
+
+#### File-Based Storage
+
+```javascript
+import LightspeedRetailSDK, { FileTokenStorage } from "lightspeed-retail-sdk";
+
+const api = new LightspeedRetailSDK({
+  accountID: "Your Account No.",
+  clientID: "Your client ID.",
+  clientSecret: "Your client secret.",
+  refreshToken: "Your initial refresh token.",
+  tokenStorage: new FileTokenStorage("./lightspeed-tokens.json"),
+});
+
+export default api;
+```
+
+#### Custom Storage (Database Example)
+
+```javascript
+import LightspeedRetailSDK from "lightspeed-retail-sdk";
+
+class DatabaseTokenStorage {
+  constructor(userId) {
+    this.userId = userId;
+  }
+
+  async getTokens() {
+    const user = await db.users.findById(this.userId);
+    return {
+      access_token: user.lightspeed_access_token,
+      refresh_token: user.lightspeed_refresh_token,
+      expires_at: user.lightspeed_token_expires_at,
+    };
+  }
+
+  async setTokens(tokens) {
+    await db.users.update(this.userId, {
+      lightspeed_access_token: tokens.access_token,
+      lightspeed_refresh_token: tokens.refresh_token,
+      lightspeed_token_expires_at: tokens.expires_at,
+    });
+  }
+}
+
+const api = new LightspeedRetailSDK({
+  accountID: "Your Account No.",
+  clientID: "Your client ID.",
+  clientSecret: "Your client secret.",
+  refreshToken: "Your initial refresh token.",
+  tokenStorage: new DatabaseTokenStorage(userId),
+});
 ```
 
 ## Example Request
 
-```
+```javascript
 const item = await api.getItem(7947, '["Category", "Images"]');
 console.log(item);
 
-7497 being the itemID. You can pass required relations as above.
+// 7947 being the itemID. You can pass required relations as above.
 ```
+
+## Token Storage Options
+
+### Built-in Storage Classes
+
+1. **InMemoryTokenStorage** (default) - Stores tokens in memory only
+2. **FileTokenStorage** - Stores tokens in a JSON file
+
+### Custom Storage Interface
+
+Implement your own storage by creating a class with these methods:
+
+```javascript
+class CustomTokenStorage {
+  async getTokens() {
+    // Return an object with: { access_token, refresh_token, expires_at }
+  }
+
+  async setTokens(tokens) {
+    // Store the tokens object: { access_token, refresh_token, expires_at, expires_in }
+  }
+}
+```
+
+## Migration from Previous Versions
+
+If you're upgrading from a previous version:
+
+1. **Update your refresh token** by making one call to the new OAuth endpoint
+2. **Implement token storage** to persist the rotating tokens
+3. **Update token URLs** (handled automatically by the SDK)
+4. **Ensure storage can handle longer tokens** (new tokens are significantly longer)
 
 ## Methods
 
@@ -75,7 +174,7 @@ console.log(item);
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
@@ -87,4 +186,5 @@ This SDK is not officially affiliated with Lightspeed HQ and is provided "as is"
 
 ## More Info
 
-The documentation for the Lightspeed Retail API can be found at https://developers.lightspeedhq.com/retail/introduction/introduction/
+- [Lightspeed Retail API Documentation](https://developers.lightspeedhq.com/retail/introduction/introduction/)
+- [New OAuth Documentation](https://developers.lightspeedhq.com/retail/authentication/oauth/)
