@@ -1071,6 +1071,12 @@ class LightspeedRetailSDK {
 class InMemoryTokenStorage {
   constructor() {
     this.tokens = {};
+    console.warn(
+      "⚠️  WARNING: Using InMemoryTokenStorage - tokens will be lost on application restart.\n" +
+        "   With Lightspeed's new OAuth system, refresh tokens are invalidated after each use.\n" +
+        "   Consider implementing persistent storage (FileTokenStorage, database, etc.) for production use.\n" +
+        "   See documentation: https://github.com/darrylmorley/lightspeed-retail-sdk"
+    );
   }
 
   async getTokens() {
