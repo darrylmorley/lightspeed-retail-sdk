@@ -1,11 +1,11 @@
-import { FileTokenStorage, InMemoryTokenStorage } from "../index.mjs";
+import { FileTokenStorage, InMemoryTokenStorage } from "../dist/index.mjs";
 
 async function testTokenStorage() {
   console.log("🔒 Testing Token Storage Classes\n");
 
   // Test FileTokenStorage
   console.log("Testing FileTokenStorage...");
-  const fileStorage = new FileTokenStorage("./test-file-tokens.json");
+  const fileStorage = new FileTokenStorage("./tests/test-storage.json");
 
   const testTokens = {
     access_token: "test_access_token",

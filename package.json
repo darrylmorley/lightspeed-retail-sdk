@@ -13,17 +13,19 @@
   },
   "scripts": {
     "test": "node tests/test.js",
+    "test:cjs": "node tests/test-cjs.cjs",
     "test:storage": "node tests/test-storage.mjs",
-    "test:all": "npm run test && npm run test && npm run test:storage",
-    "build": "npm run clean && npm run build:core && npm run build:storage && npm run build:main && npm run build:copy",
-    "build:core": "babel src/core/LightspeedSDK.mjs --out-file dist/core/LightspeedSDK.cjs",
-    "build:storage": "babel src/storage/TokenStorage.mjs --out-file dist/storage/TokenStorage.cjs",
-    "build:main": "babel index.mjs --out-file dist/index.cjs",
-    "build:copy": "cp index.mjs dist/index.mjs && cp -r src dist/",
-    "prebuild": "mkdir -p dist/core dist/storage",
-    "clean": "rm -rf dist",
-    "watch": "babel src --watch --out-dir dist --extensions .mjs",
-    "prepublishOnly": "npm run build"
+    "test:all": "npm run test && npm run test:cjs && npm run test:storage",
+    "build": "npm run clean && npm run prebuild && npm run build:esm && npm run build:cjs && npm run fix-paths && npm run fix-exports",
+    "fix-exports": "echo '\n// Convenience export for CommonJS\nmodule.exports = exports.default;\nmodule.exports.default = exports.default;\nmodule.exports.FileTokenStorage = exports.FileTokenStorage;\nmodule.exports.InMemoryTokenStorage = exports.InMemoryTokenStorage;\nmodule.exports.DatabaseTokenStorage = exports.DatabaseTokenStorage;' >> dist/index.cjs",
+    "build:esm": "cp index.mjs dist/index.mjs && cp -r src dist/",
+    "build:cjs": "npm run build:core && npm run build:storage && npm run build:main",
+    "build:core": "swc src/core/LightspeedSDK.mjs -o dist/src/core/LightspeedSDK.cjs",
+    "build:storage": "swc src/storage/TokenStorage.mjs -o dist/src/storage/TokenStorage.cjs",
+    "build:main": "swc index.mjs -o dist/index.cjs",
+    "fix-paths": "find dist -name '*.cjs' -exec sed -i '' 's/\\.mjs/.cjs/g' {} +",
+    "prebuild": "mkdir -p dist/src/core dist/src/storage",
+    "clean": "rm -rf dist"
   },
   "files": [
     "dist/",
@@ -47,9 +49,7 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.28.0",
-    "@babel/core": "^7.28.0",
-    "@babel/preset-env": "^7.28.0",
-    "@babel/plugin-transform-modules-commonjs": "^7.28.0"
+    "@swc/cli": "^0.7.7",
+    "@swc/core": "^1.12.9"
   }
 }
