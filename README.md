@@ -2,6 +2,8 @@
 
 A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
 
+**Current Version: 3.0.0** - Updated with new OAuth system support and enhanced token management.
+
 ## 🚨 Important Update - New OAuth System
 
 **Lightspeed has implemented a new OAuth authorization server.** This SDK has been updated to support the new endpoints and token rotation system.
@@ -18,6 +20,7 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 - Easy-to-use methods for interacting with various Lightspeed Retail endpoints.
 - Built-in handling of API rate limits.
 - Automatic token management for authentication.
+- **NEW: Auto-retry on authentication errors** - Automatically refreshes tokens and retries failed requests.
 - Support for paginated responses from the Lightspeed API.
 - Retry logic for handling transient network issues.
 - **NEW: Flexible token storage** - File-based, database, or custom storage options.
@@ -25,6 +28,39 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 - **NEW: Bulk operations** - Update multiple items efficiently.
 - **NEW: Inventory management** - Low stock alerts and category-based queries.
 - Support for both CommonJS and ES modules.
+
+## Smart Token Management
+
+The SDK intelligently manages tokens with these features:
+
+- **Automatic refresh** - Tokens are refreshed before they expire (1-minute buffer)
+- **Auto-retry on 401 errors** - If a token is invalid, the SDK automatically refreshes and retries the request
+- **Persistent storage priority** - Always checks stored tokens first, falls back to environment variables
+- **Token rotation support** - Handles Lightspeed's new token rotation system seamlessly
+
+### Token Priority Order
+
+1. **Stored tokens** (from your chosen storage method)
+2. **Environment variables** (fallback)
+3. **Automatic refresh** (when expired)
+
+## Environment Variables
+
+For development and testing, you can use environment variables:
+
+```bash
+# Required
+LIGHTSPEED_ACCOUNT_ID=your_account_id
+LIGHTSPEED_CLIENT_ID=your_client_id
+LIGHTSPEED_CLIENT_SECRET=your_client_secret
+
+# Optional (for initial setup)
+LIGHTSPEED_ACCESS_TOKEN=your_access_token
+LIGHTSPEED_REFRESH_TOKEN=your_refresh_token
+LIGHTSPEED_TOKEN_EXPIRES_AT=2025-01-01T00:00:00.000Z
+```
+
+⚠️ **Note**: Environment variables are used as fallback when no stored tokens are found. Once tokens are stored via your chosen storage method, those take priority.
 
 ## Installation
 
@@ -37,14 +73,14 @@ npm install lightspeed-retail-sdk
 ### Basic Usage (In-Memory Storage)
 
 ```javascript
-import LightspeedRetailSDK, { FileTokenStorage } from "lightspeed-retail-sdk";
+import LightspeedRetailSDK from "lightspeed-retail-sdk";
 
 const api = new LightspeedRetailSDK({
   accountID: "Your Account No.",
   clientID: "Your client ID.",
   clientSecret: "Your client secret.",
   refreshToken: "Your initial refresh token.",
-  tokenStorage: new FileTokenStorage("./lightspeed-tokens.json"),
+  // No tokenStorage = uses InMemoryTokenStorage by default
 });
 ```
 
@@ -112,6 +148,12 @@ const api = new LightspeedRetailSDK({
 const item = await api.getItem(7947, '["Category", "Images"]');
 console.log(item);
 
+// Get all items
+const allItems = await api.getItems();
+
+// Get limited number of items
+const firstTenItems = await api.getItems(null, 10);
+
 // Search for items
 const searchResults = await api.searchItems("iPhone", '["Category"]');
 
@@ -124,6 +166,10 @@ const updates = [
   { itemID: 456, data: { qoh: 50 } },
 ];
 const results = await api.updateMultipleItems(updates);
+
+// Check API connection
+const status = await api.ping();
+console.log(status);
 
 // Check API connection
 const status = await api.ping();
@@ -177,7 +223,7 @@ If you're upgrading from a previous version:
 #### Items
 
 - `getItem(id, relations)` - Fetch a specific item by ID
-- `getItems(relations)` - Retrieve all items
+- `getItems(relations, limit)` - Retrieve all items (or limited number if limit specified)
 - `getMultipleItems(items, relations)` - Get multiple items by IDs
 - `putItem(id, data)` - Update an item
 - `postItem(data)` - Create a new item
