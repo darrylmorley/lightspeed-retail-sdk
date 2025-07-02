@@ -21,6 +21,9 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 - Support for paginated responses from the Lightspeed API.
 - Retry logic for handling transient network issues.
 - **NEW: Flexible token storage** - File-based, database, or custom storage options.
+- **NEW: Advanced search capabilities** - Search items and customers with flexible queries.
+- **NEW: Bulk operations** - Update multiple items efficiently.
+- **NEW: Inventory management** - Low stock alerts and category-based queries.
 - Support for both CommonJS and ES modules.
 
 ## Installation
@@ -103,13 +106,29 @@ const api = new LightspeedRetailSDK({
 });
 ```
 
-## Example Request
+## Example Requests
 
 ```javascript
+// Basic item request
 const item = await api.getItem(7947, '["Category", "Images"]');
 console.log(item);
 
-// 7947 being the itemID. You can pass required relations as above.
+// Search for items
+const searchResults = await api.searchItems("iPhone", '["Category"]');
+
+// Get low stock items
+const lowStockItems = await api.getItemsWithLowStock(10, '["Category"]');
+
+// Bulk update items
+const updates = [
+  { itemID: 123, data: { description: "Updated description" } },
+  { itemID: 456, data: { qoh: 50 } },
+];
+const results = await api.updateMultipleItems(updates);
+
+// Check API connection
+const status = await api.ping();
+console.log(status);
 ```
 
 ## Token Storage Options
@@ -144,33 +163,148 @@ If you're upgrading from a previous version:
 3. **Update token URLs** (handled automatically by the SDK)
 4. **Ensure storage can handle longer tokens** (new tokens are significantly longer)
 
-## Methods
+## API Methods
 
-- `getCustomer(id, relations)`: Fetches a specific customer by ID. Optionally, related data can be included.
-- `getCustomers(relations)`: Retrieves all customers. Optionally, related data can be included.
-- `getItem(id, relations)`: Fetches a specific item by ID. Optionally, related data can be included.
-- `getMultipleItems(items, relations)`: Retrieves multiple items by their IDs. Optionally, related data can be included.
-- `getItems(relations)`: Retrieves all items. Optionally, related data can be included.
-- `getvendorItems(vendorID, relations)`: Retrieves all items for a specific vendor. Optionally, related data can be included.
-- `getMatrixItems(relations)`: Fetches all matrix items. Optionally, related data can be included.
-- `getMatrixItem(id, relations)`: Fetches a specific matrix item by ID. Optionally, related data can be included.
-- `getCategory(id, relations)`: Retrieves a specific category by ID. Optionally, related data can be included.
-- `getCategories(relations)`: Retrieves all categories. Optionally, related data can be included.
-- `getManufacturer(id, relations)`: Fetches a specific manufacturer by ID. Optionally, related data can be included.
-- `getManufacturers(relations)`: Retrieves all manufacturers. Optionally, related data can be included.
-- `getOrder(id, relations)`: Fetches a specific order by ID. Optionally, related data can be included.
-- `getOrders(relations)`: Retrieves all orders. Optionally, related data can be included.
-- `getOrdersByVendorID(id, relations)`: Retrieves all orders for a specific vendor. Optionally, related data can be included.
-- `getOpenOrdersByVendorID(id, relations)`: Fetches all open orders for a specific vendor. Optionally, related data can be included.
-- `getVendor(id, relations)`: Fetches a specific vendor by ID. Optionally, related data can be included.
-- `getVendors(relations)`: Retrieves all vendors. Optionally, related data can be included.
-- `getSale(id, relations)`: Fetches a specific sale by ID. Optionally, related data can be included.
-- `getSales(relations)`: Retrieves all sales. Optionally, related data can be included.
-- `getMultipleSales(saleIDs, relations)`: Fetches multiple sales by their IDs. Optionally, related data can be included.
-- `getSaleLinesByItem(itemID, relations)`: Retrieves sale lines for a specific item. Optionally, related data can be included.
-- `getSaleLinesByItems(ids, startDate, endDate, relations)`: Retrieves sale lines for multiple items, filtered by date range. Optionally, related data can be included.
-- `getSaleLinesByVendorID(id, startDate, endDate, relations)`: Fetches sale lines for a specific vendor, filtered by date range. Optionally, related data can be included.
-- `getSpecialOrders(relations)`: Fetches special orders. Optionally, related data can be included.
+### Core Resources
+
+#### Customers
+
+- `getCustomer(id, relations)` - Fetch a specific customer by ID
+- `getCustomers(relations)` - Retrieve all customers
+- `putCustomer(id, data)` - Update a customer
+- `postCustomer(data)` - Create a new customer
+- `searchCustomers(searchTerm, relations)` - Search customers by name or email
+
+#### Items
+
+- `getItem(id, relations)` - Fetch a specific item by ID
+- `getItems(relations)` - Retrieve all items
+- `getMultipleItems(items, relations)` - Get multiple items by IDs
+- `putItem(id, data)` - Update an item
+- `postItem(data)` - Create a new item
+- `getvendorItems(vendorID, relations)` - Get items by vendor
+- `searchItems(searchTerm, relations)` - Search items by description
+- `getItemsByCategory(categoryId, relations)` - Get items in a category
+- `getItemsWithLowStock(threshold, relations)` - Get items below stock threshold
+- `updateMultipleItems(updates)` - Bulk update multiple items
+
+#### Matrix Items
+
+- `getMatrixItem(id, relations)` - Fetch a specific matrix item by ID
+- `getMatrixItems(relations)` - Retrieve all matrix items
+- `putMatrixItem(id, data)` - Update a matrix item
+- `postMatrixItem(data)` - Create a new matrix item
+
+#### Categories
+
+- `getCategory(id, relations)` - Fetch a specific category by ID
+- `getCategories(relations)` - Retrieve all categories
+- `putCategory(id, data)` - Update a category
+- `postCategory(data)` - Create a new category
+
+#### Manufacturers
+
+- `getManufacturer(id, relations)` - Fetch a specific manufacturer by ID
+- `getManufacturers(relations)` - Retrieve all manufacturers
+- `putManufacturer(id, data)` - Update a manufacturer
+- `postManufacturer(data)` - Create a new manufacturer
+
+#### Vendors
+
+- `getVendor(id, relations)` - Fetch a specific vendor by ID
+- `getVendors(relations)` - Retrieve all vendors
+- `putVendor(id, data)` - Update a vendor
+- `postVendor(data)` - Create a new vendor
+
+#### Orders
+
+- `getOrder(id, relations)` - Fetch a specific order by ID
+- `getOrders(relations)` - Retrieve all orders
+- `getOrdersByVendorID(id, relations)` - Get orders by vendor
+- `getOpenOrdersByVendorID(id, relations)` - Get open orders by vendor
+
+#### Sales
+
+- `getSale(id, relations)` - Fetch a specific sale by ID
+- `getSales(relations)` - Retrieve all sales
+- `getMultipleSales(saleIDs, relations)` - Get multiple sales by IDs
+- `getSalesByDateRange(startDate, endDate, relations)` - Get sales in date range
+- `putSale(id, data)` - Update a sale
+- `postSale(data)` - Create a new sale
+
+#### Sale Lines
+
+- `getSaleLinesByItem(itemID, relations)` - Get sale lines for an item
+- `getSaleLinesByItems(ids, startDate, endDate, relations)` - Get sale lines for multiple items with date filter
+- `getSaleLinesByVendorID(id, startDate, endDate, relations)` - Get sale lines by vendor with date filter
+
+### Account & Configuration
+
+#### Account Information
+
+- `getAccount(relations)` - Get account/shop information
+
+#### Employees
+
+- `getEmployees(relations)` - Get all employees
+- `getEmployee(id, relations)` - Get a specific employee
+
+#### System Configuration
+
+- `getCustomerTypes(relations)` - Get customer types
+- `getRegisters(relations)` - Get registers/shops
+- `getPaymentTypes(relations)` - Get payment types
+- `getTaxClasses(relations)` - Get tax classes
+- `getItemAttributes(relations)` - Get item attributes
+
+### Gift Cards & Special Orders
+
+- `getGiftCards(relations)` - Get all gift cards
+- `getGiftCard(id, relations)` - Get a specific gift card by code
+- `getSpecialOrders(relations)` - Get special orders
+
+### Images
+
+- `getImages(relations)` - Get all images
+- `postImage(imageFilePath, metadata)` - Upload an image
+
+### Utility Methods
+
+- `ping()` - Test API connection and authentication
+- `refreshTokens()` - Force refresh of access tokens
+- `getTokenInfo()` - Get current token status information
+
+## Error Handling
+
+The SDK includes comprehensive error handling with automatic retries for transient failures:
+
+```javascript
+try {
+  const item = await api.getItem(123);
+  console.log(item);
+} catch (error) {
+  console.error("API Error:", error.message);
+  // Error details are automatically logged by the SDK
+}
+```
+
+## Rate Limiting
+
+The SDK automatically handles Lightspeed's API rate limits by:
+
+- Monitoring rate limit headers
+- Calculating appropriate delays
+- Automatically waiting when limits are approached
+
+## Pagination
+
+For endpoints that return large datasets, the SDK automatically handles pagination:
+
+```javascript
+// This will automatically fetch all pages
+const allItems = await api.getItems();
+console.log(`Retrieved ${allItems.length} items`);
+```
 
 ## Contributing
 
