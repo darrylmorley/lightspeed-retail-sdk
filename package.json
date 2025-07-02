@@ -1,6 +1,6 @@
 {
   "name": "lightspeed-retail-sdk",
-  "version": "2.0.13",
+  "version": "2.1.0",
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "type": "module",
   "main": "index.cjs",
