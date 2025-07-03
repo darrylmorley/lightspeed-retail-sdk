@@ -59,7 +59,14 @@ export class EncryptedTokenStorage {
         decrypted += decipher.final("utf8");
         return JSON.parse(decrypted);
       } catch (err) {
-        throw new Error("Failed to decrypt tokens: " + err.message);
+        const helpMsg =
+          "\n❌ Failed to decrypt tokens. This may be due to an incorrect or rotated encryption key, or a corrupted token file.\n" +
+          "👉 Please check your encryption key or re-authenticate.\n" +
+          "Original error: " +
+          err.message;
+        console.error(helpMsg);
+        process.emitWarning(helpMsg, { code: "TOKEN_DECRYPTION_FAILED" });
+        throw new Error(helpMsg);
       }
     }
 
