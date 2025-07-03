@@ -104,6 +104,57 @@ const api = new LightspeedRetailSDK({
 export default api;
 ```
 
+#### Encrypted Storage (Recommended)
+
+You can now store your tokens **encrypted at rest** using the built-in `EncryptedTokenStorage` class. This works as a wrapper around any storage adapter (such as `FileTokenStorage`) and uses AES-256-GCM encryption with a key you provide.
+
+**Generate a key** (if you haven't already):
+
+```bash
+npm run generate-key
+```
+
+Add the generated key to your `.env` file:
+
+```env
+LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key_here
+```
+
+**Usage Example:**
+
+```javascript
+import LightspeedRetailSDK, { FileTokenStorage } from "lightspeed-retail-sdk";
+import { EncryptedTokenStorage } from "lightspeed-retail-sdk/src/storage/TokenStorage.mjs";
+import dotenv from "dotenv";
+dotenv.config();
+
+const fileStorage = new FileTokenStorage("./lightspeed-tokens.json");
+const encryptionKey = process.env.LIGHTSPEED_ENCRYPTION_KEY;
+
+const tokenStorage = encryptionKey
+  ? new EncryptedTokenStorage(fileStorage, encryptionKey)
+  : fileStorage;
+
+const api = new LightspeedRetailSDK({
+  accountID: "Your Account No.",
+  clientID: "Your client ID.",
+  clientSecret: "Your client secret.",
+  refreshToken: "Your initial refresh token.",
+  tokenStorage,
+});
+
+export default api;
+```
+
+- If `LIGHTSPEED_ENCRYPTION_KEY` is set, your tokens will be encrypted transparently.
+- If not, it falls back to plain file storage (backward compatible).
+- The encryption uses AES-256-GCM and is fully compatible with existing token files (it will auto-detect and migrate as needed).
+
+**Note:**  
+Keep your encryption key secure and never commit it to version control!
+
+---
+
 #### Database Storage (Built-in Base Class)
 
 The SDK provides a `DatabaseTokenStorage` base class that you can extend:

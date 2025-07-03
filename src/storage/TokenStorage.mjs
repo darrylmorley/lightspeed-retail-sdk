@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import crypto from "crypto";
 
 // Base class for token storage
 export class TokenStorage {
@@ -9,6 +10,90 @@ export class TokenStorage {
 
   async setTokens(tokens) {
     throw new Error("setTokens() must be implemented by subclass");
+  }
+}
+
+/**
+ * @param {TokenStorage} storageAdapter - Any TokenStorage instance (e.g., FileTokenStorage)
+ * @param {string} encryptionKey - 32-byte (256-bit) key as a hex string or Buffer
+ */
+export class EncryptedTokenStorage {
+  constructor(storageAdapter, encryptionKey) {
+    this.adapter = storageAdapter;
+    // Accept hex string or Buffer
+    if (typeof encryptionKey === "string") {
+      this.key = Buffer.from(encryptionKey, "hex");
+    } else {
+      this.key = encryptionKey;
+    }
+    if (this.key.length !== 32) {
+      throw new Error("Encryption key must be 32 bytes (256 bits)");
+    }
+    this.algorithm = "aes-256-gcm";
+  }
+
+  async getTokens() {
+    const encrypted = await this.adapter.getTokens();
+
+    // Backwards compatibility: if it's a plain object with access_token, return as-is
+    if (encrypted && typeof encrypted === "object" && encrypted.access_token) {
+      return encrypted;
+    }
+
+    // Otherwise, expect { iv, tag, data }
+    if (
+      encrypted &&
+      typeof encrypted === "object" &&
+      encrypted.iv &&
+      encrypted.tag &&
+      encrypted.data
+    ) {
+      try {
+        const iv = Buffer.from(encrypted.iv, "hex");
+        const tag = Buffer.from(encrypted.tag, "hex");
+        const encryptedData = Buffer.from(encrypted.data, "hex");
+
+        const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
+        decipher.setAuthTag(tag);
+        let decrypted = decipher.update(encryptedData, undefined, "utf8");
+        decrypted += decipher.final("utf8");
+        return JSON.parse(decrypted);
+      } catch (err) {
+        throw new Error("Failed to decrypt tokens: " + err.message);
+      }
+    }
+
+    // If file is empty or not recognized, return empty object
+    return {};
+  }
+
+  async setTokens(tokens) {
+    // Backwards compatibility: if tokens are already encrypted, just store as-is
+    if (
+      tokens &&
+      typeof tokens === "object" &&
+      tokens.iv &&
+      tokens.tag &&
+      tokens.data
+    ) {
+      return this.adapter.setTokens(tokens);
+    }
+
+    // Encrypt the tokens object
+    const iv = crypto.randomBytes(12); // 96 bits for GCM
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
+
+    let encrypted = cipher.update(JSON.stringify(tokens), "utf8");
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    const tag = cipher.getAuthTag();
+
+    const encryptedPayload = {
+      iv: iv.toString("hex"),
+      tag: tag.toString("hex"),
+      data: encrypted.toString("hex"),
+    };
+
+    return this.adapter.setTokens(encryptedPayload);
   }
 }
 

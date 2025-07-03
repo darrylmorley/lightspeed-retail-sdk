@@ -1,4 +1,5 @@
 import LightspeedRetailSDK, { FileTokenStorage } from "../dist/index.mjs";
+import { EncryptedTokenStorage } from "../dist/src/storage/TokenStorage.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -8,7 +9,12 @@ async function testSDK() {
 
   try {
     // Create FileTokenStorage instance
-    const tokenStorage = new FileTokenStorage("./tests/live-tokens.json");
+    const fileStorage = new FileTokenStorage("./tests/live-tokens.json");
+
+    const encryptionKey = process.env.LIGHTSPEED_ENCRYPTION_KEY;
+    const tokenStorage = encryptionKey
+      ? new EncryptedTokenStorage(fileStorage, encryptionKey)
+      : fileStorage;
 
     // Try to get existing tokens from file storage first
     let storedTokens = await tokenStorage.getTokens();

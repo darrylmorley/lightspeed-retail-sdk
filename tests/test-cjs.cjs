@@ -1,5 +1,8 @@
 const LightspeedRetailSDK = require("../dist/index.cjs");
 const { FileTokenStorage } = require("../dist/index.cjs");
+const {
+  EncryptedTokenStorage,
+} = require("../dist/src/storage/TokenStorage.cjs");
 require("dotenv").config();
 
 async function testCJS() {
@@ -7,7 +10,12 @@ async function testCJS() {
 
   try {
     // Create FileTokenStorage instance
-    const tokenStorage = new FileTokenStorage("./tests/live-tokens.json");
+    const fileStorage = new FileTokenStorage("./tests/live-tokens.json");
+
+    const encryptionKey = process.env.LIGHTSPEED_ENCRYPTION_KEY;
+    const tokenStorage = encryptionKey
+      ? new EncryptedTokenStorage(fileStorage, encryptionKey)
+      : fileStorage;
 
     // Try to get existing tokens from file storage first
     let storedTokens = await tokenStorage.getTokens();
