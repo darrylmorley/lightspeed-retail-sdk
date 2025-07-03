@@ -8,3 +8,4 @@ tests/live-tokens.json
 tests/test-tokens.json
 tests/integration-tokens.json
 tests/test-storage.json
+tokens.sqlite

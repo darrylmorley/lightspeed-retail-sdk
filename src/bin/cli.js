@@ -79,7 +79,7 @@ program
         ));
 
       // 2. Build OAuth URL
-      const authUrl = `https://cloud.lightspeedapp.com/oauth/authorize?response_type=code&client_id=${encodeURIComponent(
+      const authUrl = `https://cloud.lightspeedapp.com/auth/oauth/authorize?response_type=code&client_id=${encodeURIComponent(
         clientID
       )}&redirect_uri=${encodeURIComponent(
         redirectUri
@@ -95,7 +95,7 @@ program
 
       // 4. Exchange code for tokens
       try {
-        const tokenUrl = "https://cloud.lightspeedapp.com/oauth/token";
+        const tokenUrl = "https://cloud.lightspeedapp.com/auth/oauth/token";
         const response = await axios.post(
           tokenUrl,
           {
@@ -800,6 +800,41 @@ async function selectStorageBackend() {
       tableName,
     });
     await dbStorage.init();
+
+    // Create table/collection if it doesn't exist
+    console.log(`\nSetting up ${dbType} storage...`);
+    try {
+      switch (dbType) {
+        case "sqlite": {
+          await new Promise((resolve, reject) => {
+            dbStorage.db.run(
+              `CREATE TABLE IF NOT EXISTS ${tableName} (app_id TEXT PRIMARY KEY, tokens TEXT NOT NULL)`,
+              (err) => (err ? reject(err) : resolve())
+            );
+          });
+          console.log(`✅ SQLite table '${tableName}' ready.`);
+          break;
+        }
+        case "postgres": {
+          await dbStorage.client.query(
+            `CREATE TABLE IF NOT EXISTS ${tableName} (app_id TEXT PRIMARY KEY, tokens JSONB NOT NULL)`
+          );
+          console.log(`✅ Postgres table '${tableName}' ready.`);
+          break;
+        }
+        case "mongodb": {
+          const db = dbStorage.mongoClient.db();
+          const collection = db.collection(tableName);
+          await collection.createIndex({ app_id: 1 }, { unique: true });
+          console.log(`✅ MongoDB collection '${tableName}' ready.`);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error(`\n❌ Failed to set up ${dbType} storage:`, err.message);
+      console.log(`\n💡 Try running: npm run cli setup-db`);
+      throw err;
+    }
 
     // Always encrypt tokens when storing in database for security
     const encryptionKey =
