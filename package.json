@@ -27,7 +27,7 @@
     "prebuild": "mkdir -p dist/src/core dist/src/storage",
     "clean": "rm -rf dist",
     "generate-key": "node scripts/generate-key.js",
-    "publish": "npm run build && npm publish"
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "dist/",
