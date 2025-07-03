@@ -12,6 +12,19 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
   - [Table of Contents](#table-of-contents)
   - [🚨 Important Update - New OAuth System](#-important-update---new-oauth-system)
     - [Key Changes](#key-changes)
+  - [Interactive CLI](#interactive-cli)
+    - [Getting Started with the CLI](#getting-started-with-the-cli)
+    - [Available CLI Commands](#available-cli-commands)
+      - [Authentication \& Setup](#authentication--setup)
+      - [Storage Management](#storage-management)
+    - [CLI Features](#cli-features)
+      - [Interactive Storage Selection](#interactive-storage-selection)
+      - [OAuth Authentication Flow](#oauth-authentication-flow)
+      - [Database Setup Wizard](#database-setup-wizard)
+      - [Token Migration](#token-migration)
+      - [Security Features](#security-features)
+    - [CLI Configuration](#cli-configuration)
+    - [CLI Examples](#cli-examples)
   - [Features](#features)
   - [Smart Token Management](#smart-token-management)
     - [Token Priority Order](#token-priority-order)
@@ -69,6 +82,155 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 - **Token rotation** — Both access and refresh tokens now change with each refresh
 - **Token persistence** — Tokens must be stored between application restarts
 - **Longer token values** — Ensure your storage can handle the new token lengths
+
+## Interactive CLI
+
+The SDK includes a powerful interactive CLI for easy setup, authentication, and token management. No coding required!
+
+### Getting Started with the CLI
+
+The CLI provides an interactive way to:
+
+- Authenticate with Lightspeed OAuth
+- Manage tokens across different storage backends
+- Set up database storage
+- Migrate tokens between storage systems
+- View account information
+
+### Available CLI Commands
+
+#### Authentication & Setup
+
+```bash
+# Start OAuth authentication flow
+npm run cli login
+
+# Check current token status
+npm run cli token-status
+
+# View your account information
+npm run cli whoami
+```
+
+#### Storage Management
+
+```bash
+# Set up database storage (SQLite, Postgres, MongoDB)
+npm run cli setup-db
+
+# Clear stored tokens
+npm run cli reset
+
+# Migrate tokens between storage backends
+npm run cli migrate-tokens
+```
+
+### CLI Features
+
+#### Interactive Storage Selection
+
+The CLI automatically prompts you to choose your preferred storage backend:
+
+- **File Storage** - Simple JSON file storage
+- **Encrypted File Storage** - AES-256-GCM encrypted file storage (recommended)
+- **Encrypted Database Storage** - SQLite, PostgreSQL, or MongoDB (always encrypted)
+
+#### OAuth Authentication Flow
+
+```bash
+npm run cli login
+```
+
+1. Prompts for your Lightspeed credentials
+2. Opens browser for OAuth authorization
+3. Automatically exchanges code for tokens
+4. Stores tokens in your chosen backend
+
+#### Database Setup Wizard
+
+```bash
+npm run cli setup-db
+```
+
+- Guides you through database connection setup
+- Creates required tables/collections
+- Tests database connectivity
+- Supports local and cloud databases
+
+#### Token Migration
+
+```bash
+npm run cli migrate-tokens
+```
+
+- Move tokens between any supported storage backends
+- Automatically creates destination storage if needed
+- Confirms before overwriting existing tokens
+- Validates successful migration
+
+#### Security Features
+
+- **Database tokens are always encrypted** - Uses AES-256-GCM encryption automatically
+- **Secure credential prompting** - Sensitive inputs are handled securely
+- **Environment variable support** - Use `.env` files for configuration
+- **Connection cleanup** - Proper database connection management
+
+### CLI Configuration
+
+You can configure the CLI using environment variables:
+
+```bash
+# Token storage location
+LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
+
+# Encryption key for secure storage
+LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key
+
+# Database connections (for database storage)
+DATABASE_URL=postgres://user:pass@host:5432/db
+MONGO_URL=mongodb://localhost:27017/lightspeed
+
+# OAuth credentials
+LIGHTSPEED_CLIENT_ID=your_client_id
+LIGHTSPEED_CLIENT_SECRET=your_client_secret
+LIGHTSPEED_ACCOUNT_ID=your_account_id
+```
+
+### CLI Examples
+
+**Complete setup from scratch:**
+
+```bash
+# 1. Generate encryption key
+npm run generate-key
+
+# 2. Set up database storage
+npm run cli setup-db
+
+# 3. Authenticate and store tokens
+npm run cli login
+
+# 4. Verify setup
+npm run cli whoami
+```
+
+**Migrate from file to database:**
+
+```bash
+npm run cli migrate-tokens
+# Select "Encrypted File" as source
+# Select "Encrypted Database" as destination
+# Choose your database type and connection
+```
+
+**Check token status:**
+
+```bash
+npm run cli token-status
+# Shows token validity, expiration, and storage location
+```
+
+The CLI makes it easy to get started with the SDK without writing any configuration code!
 
 ## Features
 
