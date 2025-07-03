@@ -10,6 +10,7 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 
 ### Key Changes
 
+- **NEW: Encrypted token storage** - Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
 - **New OAuth endpoints** - Updated to use `https://cloud.lightspeedapp.com/auth/oauth/token`
 - **Token rotation** - Both access and refresh tokens now change with each refresh
 - **Token persistence** - Tokens must be stored between application restarts
@@ -17,6 +18,7 @@ A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provid
 
 ## Features
 
+- **NEW: Encrypted token storage** - Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
 - Easy-to-use methods for interacting with various Lightspeed Retail endpoints.
 - Built-in handling of API rate limits.
 - Automatic token management for authentication.
