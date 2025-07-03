@@ -1,35 +1,89 @@
 # Another Unofficial Lightspeed Retail V3 API SDK
 
-A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
+A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.1.1** - Updated with secure encrypted token storage using Node.js crypto.
+**Current Version: 3.1.1** — Now with secure encrypted token storage using Node.js crypto.
+
+---
+
+## Table of Contents
+
+- [Another Unofficial Lightspeed Retail V3 API SDK](#another-unofficial-lightspeed-retail-v3-api-sdk)
+  - [Table of Contents](#table-of-contents)
+  - [🚨 Important Update - New OAuth System](#-important-update---new-oauth-system)
+    - [Key Changes](#key-changes)
+  - [Features](#features)
+  - [Smart Token Management](#smart-token-management)
+    - [Token Priority Order](#token-priority-order)
+  - [Environment Variables](#environment-variables)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+    - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
+    - [Recommended Usage (Persistent Storage)](#recommended-usage-persistent-storage)
+      - [File-Based Storage](#file-based-storage)
+      - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
+  - [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
+    - [PostgreSQL Schema](#postgresql-schema)
+    - [SQLite Schema](#sqlite-schema)
+    - [Example: Using DatabaseTokenStorage](#example-using-databasetokenstorage)
+    - [Notes](#notes)
+    - [Custom Storage Interface (Advanced)](#custom-storage-interface-advanced)
+  - [CommonJS Usage](#commonjs-usage)
+    - [ES Modules (Recommended)](#es-modules-recommended)
+    - [CommonJS](#commonjs)
+  - [Migration from Previous Versions](#migration-from-previous-versions)
+  - [API Methods](#api-methods)
+    - [Core Resources](#core-resources)
+      - [Customers](#customers)
+      - [Items](#items)
+      - [Matrix Items](#matrix-items)
+      - [Categories](#categories)
+      - [Manufacturers](#manufacturers)
+      - [Vendors](#vendors)
+      - [Orders](#orders)
+      - [Sales](#sales)
+      - [Sale Lines](#sale-lines)
+    - [Account \& Configuration](#account--configuration)
+      - [Account Information](#account-information)
+      - [Employees](#employees)
+      - [System Configuration](#system-configuration)
+    - [Gift Cards \& Special Orders](#gift-cards--special-orders)
+    - [Images](#images)
+    - [Utility Methods](#utility-methods)
+  - [Error Handling](#error-handling)
+  - [Rate Limiting](#rate-limiting)
+  - [Pagination](#pagination)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Disclaimer](#disclaimer)
+  - [More Info](#more-info)
 
 ## 🚨 Important Update - New OAuth System
 
-**Lightspeed has implemented a new OAuth authorization server.** This SDK has been updated to support the new endpoints and token rotation system.
+**Lightspeed has implemented a new OAuth authorization server.** This SDK is fully updated to support the new endpoints and token rotation system.
 
 ### Key Changes
 
-- **NEW: Encrypted token storage** - Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
-- **New OAuth endpoints** - Updated to use `https://cloud.lightspeedapp.com/auth/oauth/token`
-- **Token rotation** - Both access and refresh tokens now change with each refresh
-- **Token persistence** - Tokens must be stored between application restarts
-- **Longer token values** - Ensure your storage can handle the new token lengths
+- **NEW: Encrypted token storage** — Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
+- **New OAuth endpoints** — Uses `https://cloud.lightspeedapp.com/auth/oauth/token`
+- **Token rotation** — Both access and refresh tokens now change with each refresh
+- **Token persistence** — Tokens must be stored between application restarts
+- **Longer token values** — Ensure your storage can handle the new token lengths
 
 ## Features
 
-- **NEW: Encrypted token storage** - Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
-- Easy-to-use methods for interacting with various Lightspeed Retail endpoints.
-- Built-in handling of API rate limits.
-- Automatic token management for authentication.
-- **NEW: Auto-retry on authentication errors** - Automatically refreshes tokens and retries failed requests.
-- Support for paginated responses from the Lightspeed API.
-- Retry logic for handling transient network issues.
-- **NEW: Flexible token storage** - File-based, database, or custom storage options.
-- **NEW: Advanced search capabilities** - Search items and customers with flexible queries.
-- **NEW: Bulk operations** - Update multiple items efficiently.
-- **NEW: Inventory management** - Low stock alerts and category-based queries.
-- Support for both CommonJS and ES modules.
+- **NEW: Encrypted token storage** — Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
+- Easy-to-use methods for all major Lightspeed Retail endpoints
+- Built-in handling of API rate limits
+- Automatic token management and refresh
+- **NEW: Auto-retry on authentication errors** — Automatically refreshes tokens and retries failed requests
+- Support for paginated responses
+- Retry logic for transient network issues
+- **NEW: Flexible token storage** — File-based, encrypted, database, or custom storage options
+- **NEW: Advanced search** — Search items and customers with flexible queries
+- **NEW: Bulk operations** — Update multiple items efficiently
+- **NEW: Inventory management** — Low stock alerts and category-based queries
+- Support for both CommonJS and ES modules
 
 ## Smart Token Management
 
@@ -125,8 +179,10 @@ LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key_here
 **Usage Example:**
 
 ```javascript
-import LightspeedRetailSDK, { FileTokenStorage } from "lightspeed-retail-sdk";
-import { EncryptedTokenStorage } from "lightspeed-retail-sdk/src/storage/TokenStorage.mjs";
+import LightspeedRetailSDK, {
+  FileTokenStorage,
+  EncryptedTokenStorage,
+} from "lightspeed-retail-sdk";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -157,260 +213,97 @@ Keep your encryption key secure and never commit it to version control!
 
 ---
 
-#### Database Storage (Built-in Base Class)
+## Database Storage (PostgreSQL, SQLite, and MongoDB)
 
-The SDK provides a `DatabaseTokenStorage` base class that you can extend:
+> **Important:** You must create the required table or collection before using the SDK. The SDK does **not** auto-create tables or collections. Manual creation is required for all environments.
+
+### PostgreSQL Schema
+
+```sql
+CREATE TABLE oauth_tokens (
+  app_id TEXT PRIMARY KEY,
+  tokens JSONB NOT NULL
+);
+```
+
+- `app_id`: Used to support multiple apps or tenants (default is `"default"`).
+- `tokens`: Stores the full token object as JSON.
+
+### SQLite Schema
+
+```sql
+CREATE TABLE oauth_tokens (
+  app_id TEXT PRIMARY KEY,
+  tokens TEXT NOT NULL
+);
+```
+
+- `tokens` is stored as a JSON string.
+
+---
+
+### Example: Using DatabaseTokenStorage
+
+> **Note:** You can use local or cloud database connection strings (for example, Heroku Postgres, MongoDB Atlas, etc.) in all examples below.
 
 ```javascript
-import LightspeedRetailSDK, {
-  DatabaseTokenStorage,
-} from "lightspeed-retail-sdk";
-import mysql from "mysql2/promise";
+import { DatabaseTokenStorage } from "lightspeed-retail-sdk";
 
-class MySQLTokenStorage extends DatabaseTokenStorage {
-  constructor(connectionConfig, userId) {
-    super();
-    this.config = connectionConfig;
-    this.userId = userId;
+// PostgreSQL
+const pgStorage = new DatabaseTokenStorage(
+  "postgres://user:pass@host:5432/dbname",
+  {
+    dbType: "postgres",
+    tableName: "oauth_tokens", // optional
+    appId: "default", // optional
   }
+);
 
-  async getTokens() {
-    const connection = await mysql.createConnection(this.config);
-    try {
-      const [rows] = await connection.execute(
-        "SELECT access_token, refresh_token, expires_at FROM user_tokens WHERE user_id = ?",
-        [this.userId]
-      );
-
-      if (rows.length === 0) {
-        return { access_token: null, refresh_token: null, expires_at: null };
-      }
-
-      return {
-        access_token: rows[0].access_token,
-        refresh_token: rows[0].refresh_token,
-        expires_at: rows[0].expires_at,
-      };
-    } finally {
-      await connection.end();
-    }
-  }
-
-  async setTokens(tokens) {
-    const connection = await mysql.createConnection(this.config);
-    try {
-      await connection.execute(
-        `INSERT INTO user_tokens (user_id, access_token, refresh_token, expires_at, updated_at) 
-         VALUES (?, ?, ?, ?, NOW()) 
-         ON DUPLICATE KEY UPDATE 
-         access_token = VALUES(access_token),
-         refresh_token = VALUES(refresh_token),
-         expires_at = VALUES(expires_at),
-         updated_at = NOW()`,
-        [
-          this.userId,
-          tokens.access_token,
-          tokens.refresh_token,
-          tokens.expires_at,
-        ]
-      );
-    } finally {
-      await connection.end();
-    }
-  }
-}
-
-// Usage
-const dbConfig = {
-  host: "localhost",
-  user: "your_user",
-  password: "your_password",
-  database: "your_database",
-};
-
-const api = new LightspeedRetailSDK({
-  accountID: "Your Account No.",
-  clientID: "Your client ID.",
-  clientSecret: "Your client secret.",
-  refreshToken: "Your initial refresh token.",
-  tokenStorage: new MySQLTokenStorage(dbConfig, "user123"),
+// SQLite
+const sqliteStorage = new DatabaseTokenStorage("./tokens.sqlite", {
+  dbType: "sqlite",
+  tableName: "oauth_tokens", // optional
+  appId: "default", // optional
 });
+
+// MongoDB
+const mongoStorage = new DatabaseTokenStorage(
+  "mongodb://localhost:27017/yourdb",
+  {
+    dbType: "mongodb",
+    tableName: "oauth_tokens", // optional (collection name)
+    appId: "default", // optional
+  }
+);
 ```
 
-#### PostgreSQL Example
+---
 
-```javascript
-import { DatabaseTokenStorage } from "lightspeed-retail-sdk";
-import pg from "pg";
+### Notes
 
-class PostgreSQLTokenStorage extends DatabaseTokenStorage {
-  constructor(connectionString, userId) {
-    super();
-    this.connectionString = connectionString;
-    this.userId = userId;
-  }
+- **You must create the table or collection before using the SDK.** The SDK does not auto-create tables or collections.
+- For multi-tenant or multi-app setups, use a unique `appId` for each logical app.
+- The SDK stores the entire token object (including access, refresh, and expiry) in the `tokens` field.
+- For MongoDB, you may use any database name in your connection string; the collection name is configurable.
 
-  async getTokens() {
-    const client = new pg.Client(this.connectionString);
-    await client.connect();
+---
 
-    try {
-      const result = await client.query(
-        "SELECT access_token, refresh_token, expires_at FROM user_tokens WHERE user_id = $1",
-        [this.userId]
-      );
+### Custom Storage Interface (Advanced)
 
-      if (result.rows.length === 0) {
-        return { access_token: null, refresh_token: null, expires_at: null };
-      }
+> **Note:** Most users do not need to implement a custom storage backend. This is only for advanced use cases where you need to integrate with a non-standard storage system (for example, a custom API, key-value store, or enterprise secrets manager).
 
-      const row = result.rows[0];
-      return {
-        access_token: row.access_token,
-        refresh_token: row.refresh_token,
-        expires_at: row.expires_at,
-      };
-    } finally {
-      await client.end();
-    }
-  }
-
-  async setTokens(tokens) {
-    const client = new pg.Client(this.connectionString);
-    await client.connect();
-
-    try {
-      await client.query(
-        `INSERT INTO user_tokens (user_id, access_token, refresh_token, expires_at, updated_at) 
-         VALUES ($1, $2, $3, $4, NOW()) 
-         ON CONFLICT (user_id) DO UPDATE SET 
-         access_token = EXCLUDED.access_token,
-         refresh_token = EXCLUDED.refresh_token,
-         expires_at = EXCLUDED.expires_at,
-         updated_at = NOW()`,
-        [
-          this.userId,
-          tokens.access_token,
-          tokens.refresh_token,
-          tokens.expires_at,
-        ]
-      );
-    } finally {
-      await client.end();
-    }
-  }
-}
-```
-
-#### MongoDB Example
-
-```javascript
-import { DatabaseTokenStorage } from "lightspeed-retail-sdk";
-import { MongoClient } from "mongodb";
-
-class MongoTokenStorage extends DatabaseTokenStorage {
-  constructor(connectionString, databaseName, userId) {
-    super();
-    this.connectionString = connectionString;
-    this.databaseName = databaseName;
-    this.userId = userId;
-  }
-
-  async getTokens() {
-    const client = new MongoClient(this.connectionString);
-    await client.connect();
-
-    try {
-      const db = client.db(this.databaseName);
-      const collection = db.collection("user_tokens");
-
-      const doc = await collection.findOne({ userId: this.userId });
-
-      if (!doc) {
-        return { access_token: null, refresh_token: null, expires_at: null };
-      }
-
-      return {
-        access_token: doc.access_token,
-        refresh_token: doc.refresh_token,
-        expires_at: doc.expires_at,
-      };
-    } finally {
-      await client.close();
-    }
-  }
-
-  async setTokens(tokens) {
-    const client = new MongoClient(this.connectionString);
-    await client.connect();
-
-    try {
-      const db = client.db(this.databaseName);
-      const collection = db.collection("user_tokens");
-
-      await collection.updateOne(
-        { userId: this.userId },
-        {
-          $set: {
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            expires_at: tokens.expires_at,
-            updated_at: new Date(),
-          },
-        },
-        { upsert: true }
-      );
-    } finally {
-      await client.close();
-    }
-  }
-}
-```
-
-### Custom Storage Interface
-
-Implement your own storage by creating a class with these methods:
+To implement your own storage, create a class with these asynchronous methods:
 
 ```javascript
 class CustomTokenStorage {
   async getTokens() {
-    // Return an object with: { access_token, refresh_token, expires_at }
-    // Return null values if no tokens are stored
+    // Return an object: { access_token, refresh_token, expires_at }
+    // Return null if no tokens are stored
   }
 
   async setTokens(tokens) {
     // Store the tokens object: { access_token, refresh_token, expires_at, expires_in }
   }
-}
-```
-
-### Database Schema Examples
-
-#### MySQL/PostgreSQL Schema
-
-```sql
-CREATE TABLE user_tokens (
-  user_id VARCHAR(255) PRIMARY KEY,
-  access_token TEXT NOT NULL,
-  refresh_token TEXT NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### MongoDB Schema
-
-```javascript
-// No strict schema required, but documents will look like:
-{
-  _id: ObjectId("..."),
-  userId: "user123",
-  access_token: "eyJ0eXAiOiJKV1Q...",
-  refresh_token: "def5020058aac34d...",
-  expires_at: "2025-07-02T16:09:42.069Z",
-  created_at: ISODate("2025-07-02T15:09:42.069Z"),
-  updated_at: ISODate("2025-07-02T15:09:42.069Z")
 }
 ```
 
@@ -444,7 +337,7 @@ If you're upgrading from a previous version:
 1. **Update your refresh token** by making one call to the new OAuth endpoint
 2. **Implement token storage** to persist the rotating tokens
 3. **Update token URLs** (handled automatically by the SDK)
-4. **Ensure storage can handle longer tokens** (new tokens are significantly longer)
+4. **Ensure your storage can handle longer tokens** (new tokens are significantly longer)
 
 ## API Methods
 

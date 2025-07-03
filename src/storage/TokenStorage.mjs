@@ -231,6 +231,7 @@ export class DatabaseTokenStorage extends TokenStorage {
     this.appId = options.appId || "default";
     this.dbType = options.dbType || "sqlite";
     this._initialized = false;
+    this._connected = false;
   }
 
   async init() {
@@ -240,6 +241,8 @@ export class DatabaseTokenStorage extends TokenStorage {
         const pg = await import("pg");
         this.pg = pg;
         this.client = new pg.Client(this.dbConnectionString);
+        await this.client.connect(); // Connect once and reuse
+        this._connected = true;
         break;
       }
       case "sqlite": {
@@ -258,6 +261,8 @@ export class DatabaseTokenStorage extends TokenStorage {
         this.mongoClient = new this.MongoClient(this.dbConnectionString, {
           useUnifiedTopology: true,
         });
+        await this.mongoClient.connect(); // Connect once and reuse
+        this._connected = true;
         break;
       }
       default:
@@ -266,17 +271,33 @@ export class DatabaseTokenStorage extends TokenStorage {
     this._initialized = true;
   }
 
+  async close() {
+    if (!this._initialized) return;
+    switch (this.dbType) {
+      case "postgres":
+        if (this._connected && this.client) {
+          await this.client.end();
+          this._connected = false;
+        }
+        break;
+      case "mongodb":
+        if (this._connected && this.mongoClient) {
+          await this.mongoClient.close();
+          this._connected = false;
+        }
+        break;
+    }
+  }
+
   async getTokens() {
     await this.init();
     switch (this.dbType) {
       case "postgres":
         try {
-          await this.client.connect();
           const res = await this.client.query(
             `SELECT tokens FROM ${this.tableName} WHERE app_id = $1 LIMIT 1`,
             [this.appId]
           );
-          await this.client.end();
           if (res.rows.length === 0) return {};
           return res.rows[0].tokens;
         } catch (error) {
@@ -326,11 +347,9 @@ export class DatabaseTokenStorage extends TokenStorage {
 
       case "mongodb":
         try {
-          await this.mongoClient.connect();
           const db = this.mongoClient.db();
           const collection = db.collection(this.tableName);
           const doc = await collection.findOne({ app_id: this.appId });
-          await this.mongoClient.close();
           if (!doc || !doc.tokens) return {};
           return doc.tokens;
         } catch (error) {
@@ -355,7 +374,6 @@ export class DatabaseTokenStorage extends TokenStorage {
     switch (this.dbType) {
       case "postgres":
         try {
-          await this.client.connect();
           await this.client.query(
             `INSERT INTO ${this.tableName} (app_id, tokens)
            VALUES ($1, $2)
@@ -363,7 +381,6 @@ export class DatabaseTokenStorage extends TokenStorage {
            DO UPDATE SET tokens = EXCLUDED.tokens`,
             [this.appId, tokens]
           );
-          await this.client.end();
         } catch (error) {
           const helpMsg =
             "\n❌ Unable to write tokens to PostgreSQL database.\n" +
@@ -397,7 +414,6 @@ export class DatabaseTokenStorage extends TokenStorage {
 
       case "mongodb":
         try {
-          await this.mongoClient.connect();
           const db = this.mongoClient.db();
           const collection = db.collection(this.tableName);
           await collection.updateOne(
@@ -405,7 +421,6 @@ export class DatabaseTokenStorage extends TokenStorage {
             { $set: { tokens } },
             { upsert: true }
           );
-          await this.mongoClient.close();
         } catch (error) {
           const helpMsg =
             "\n❌ Unable to write tokens to MongoDB.\n" +
