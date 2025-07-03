@@ -311,6 +311,136 @@ program
   });
 
 program
+  .command("migrate-tokens")
+  .description(
+    "Copy tokens from one storage backend to another (file, encrypted file, or database)"
+  )
+  .action(async () => {
+    console.log("\n🔄 Token Storage Migration Wizard\n");
+    // Prompt for source backend
+    console.log("Select SOURCE storage backend:");
+    const sourceBackend = await selectStorageBackend();
+    const sourceTokens = await sourceBackend.getTokens();
+    if (!sourceTokens || !sourceTokens.access_token) {
+      console.error("\n❌ No tokens found in source storage. Aborting.");
+      return;
+    }
+    console.log("\n✅ Tokens loaded from source:");
+    console.log(sourceTokens);
+
+    // Prompt for destination backend
+    console.log("\nSelect DESTINATION storage backend:");
+    const destBackend = await selectStorageBackend();
+
+    // Attempt to create table/collection/file if it doesn't exist (best effort)
+    switch (destBackend.constructor.name) {
+      case "FileTokenStorage": {
+        const fs = await import("fs");
+        if (!fs.existsSync(destBackend.filePath)) {
+          try {
+            await fs.promises.writeFile(destBackend.filePath, "{}", "utf8");
+            console.log(`Created token file: ${destBackend.filePath}`);
+          } catch (err) {
+            console.error(
+              `Failed to create token file: ${destBackend.filePath}`,
+              err.message
+            );
+          }
+        }
+        break;
+      }
+      case "EncryptedTokenStorage": {
+        // Underlying adapter is FileTokenStorage
+        const fs = await import("fs");
+        if (!fs.existsSync(destBackend.adapter.filePath)) {
+          try {
+            await fs.promises.writeFile(
+              destBackend.adapter.filePath,
+              "{}",
+              "utf8"
+            );
+            console.log(
+              `Created encrypted token file: ${destBackend.adapter.filePath}`
+            );
+          } catch (err) {
+            console.error(
+              `Failed to create encrypted token file: ${destBackend.adapter.filePath}`,
+              err.message
+            );
+          }
+        }
+        break;
+      }
+      case "DatabaseTokenStorage": {
+        // Try to create table/collection if not exists
+        try {
+          await destBackend.init();
+          switch (destBackend.dbType) {
+            case "sqlite": {
+              await new Promise((resolve, reject) => {
+                destBackend.db.run(
+                  `CREATE TABLE IF NOT EXISTS ${destBackend.tableName} (app_id TEXT PRIMARY KEY, tokens TEXT NOT NULL)`,
+                  (err) => (err ? reject(err) : resolve())
+                );
+              });
+              console.log(
+                `Ensured SQLite table '${destBackend.tableName}' exists.`
+              );
+              break;
+            }
+            case "postgres": {
+              await destBackend.client.query(
+                `CREATE TABLE IF NOT EXISTS ${destBackend.tableName} (app_id TEXT PRIMARY KEY, tokens JSONB NOT NULL)`
+              );
+              console.log(
+                `Ensured Postgres table '${destBackend.tableName}' exists.`
+              );
+              break;
+            }
+            case "mongodb": {
+              const db = destBackend.mongoClient.db();
+              const collection = db.collection(destBackend.tableName);
+              await collection.createIndex({ app_id: 1 }, { unique: true });
+              console.log(
+                `Ensured MongoDB collection '${destBackend.tableName}' exists (with unique index on app_id).`
+              );
+              break;
+            }
+          }
+        } catch (err) {
+          console.error(
+            "Failed to ensure destination DB table/collection exists:",
+            err.message
+          );
+        }
+        break;
+      }
+      default:
+        // No action needed for unknown types
+        break;
+    }
+
+    // Confirm overwrite if destination already has tokens
+    const destTokens = await destBackend.getTokens();
+    if (destTokens && destTokens.access_token) {
+      const { confirm } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirm",
+          message: "Destination already has tokens. Overwrite?",
+          default: false,
+        },
+      ]);
+      if (!confirm) {
+        console.log("\n❌ Migration cancelled by user.");
+        return;
+      }
+    }
+    await destBackend.setTokens(sourceTokens);
+    console.log("\n🎉 Tokens migrated successfully!");
+  });
+
+program
   .command("whoami")
   .description("Show account info for current token")
   .action(async () => {
