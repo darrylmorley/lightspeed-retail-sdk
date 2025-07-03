@@ -69,6 +69,7 @@ program
         (await prompt("Enter your Lightspeed Client Secret: "));
       const redirectUri =
         process.env.LIGHTSPEED_REDIRECT_URI ||
+        process.env.LIGHTSPEED_REDIRECT_URL ||
         (await prompt(
           "Enter your Redirect URI (must match your app settings): "
         ));

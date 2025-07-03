@@ -265,13 +265,14 @@ LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
 LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key
 
 # Database connections (for database storage)
-DATABASE_URL=postgres://user:pass@host:5432/db
+POSTGRES_URL=postgres://user:pass@host:5432/db
 MONGO_URL=mongodb://localhost:27017/lightspeed
 
 # OAuth credentials
 LIGHTSPEED_CLIENT_ID=your_client_id
 LIGHTSPEED_CLIENT_SECRET=your_client_secret
 LIGHTSPEED_ACCOUNT_ID=your_account_id
+LIGHTSPEED_REDIRECT_URL=your_lightspeed_redirect_url
 ```
 
 ### CLI Examples
