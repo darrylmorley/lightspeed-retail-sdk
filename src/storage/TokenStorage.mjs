@@ -155,35 +155,272 @@ export class FileTokenStorage extends TokenStorage {
       if (error.code === "ENOENT") {
         return {};
       }
-      throw error;
+      const helpMsg =
+        "\n❌ Unable to read token file. Please check file permissions and available disk space.\n" +
+        "File: " +
+        this.filePath +
+        "\n" +
+        "Original error: " +
+        error.message;
+      console.error(helpMsg);
+      process.emitWarning(helpMsg, { code: "TOKEN_FILE_READ_FAILED" });
+      return {};
     }
   }
 
   async setTokens(tokens) {
-    await fs.writeFile(this.filePath, JSON.stringify(tokens, null, 2));
+    try {
+      await fs.writeFile(
+        this.filePath,
+        JSON.stringify(tokens, null, 2),
+        "utf8"
+      );
+    } catch (error) {
+      const helpMsg =
+        "\n❌ Unable to write token file. Please check file permissions and available disk space.\n" +
+        "File: " +
+        this.filePath +
+        "\n" +
+        "Original error: " +
+        error.message;
+      console.error(helpMsg);
+      process.emitWarning(helpMsg, { code: "TOKEN_FILE_WRITE_FAILED" });
+      throw new Error(helpMsg);
+    }
   }
 }
 
-// Database storage template
+/**
+ * Persistent token storage using a database backend.
+ *
+ * Supported dbType values: "postgres", "sqlite", "mongodb"
+ *
+ * @example
+ * // PostgreSQL
+ * const storage = new DatabaseTokenStorage("postgres://user:pass@host:5432/dbname", {
+ *   dbType: "postgres",
+ *   tableName: "oauth_tokens", // optional
+ *   appId: "default" // optional
+ * });
+ *
+ * // SQLite
+ * const storage = new DatabaseTokenStorage("./tokens.sqlite", {
+ *   dbType: "sqlite",
+ *   tableName: "oauth_tokens", // optional
+ *   appId: "default" // optional
+ * });
+ *
+ * // MongoDB
+ * const storage = new DatabaseTokenStorage("mongodb://localhost:27017/yourdb", {
+ *   dbType: "mongodb",
+ *   tableName: "oauth_tokens", // optional (collection name)
+ *   appId: "default" // optional
+ * });
+ *
+ * @param {string} databaseConnection - Connection string or file path for the database.
+ * @param {Object} options
+ * @param {"postgres"|"sqlite"|"mongodb"} options.dbType - Type of database backend.
+ * @param {string} [options.tableName] - Table/collection name for storing tokens.
+ * @param {string} [options.appId] - Application ID for multi-app support.
+ */
 export class DatabaseTokenStorage extends TokenStorage {
   constructor(databaseConnection, options = {}) {
     super();
-    this.db = databaseConnection;
+    this.dbConnectionString = databaseConnection;
     this.tableName = options.tableName || "oauth_tokens";
     this.appId = options.appId || "default";
+    this.dbType = options.dbType || "sqlite";
+    this._initialized = false;
+  }
+
+  async init() {
+    if (this._initialized) return;
+    switch (this.dbType) {
+      case "postgres": {
+        const pg = await import("pg");
+        this.pg = pg;
+        this.client = new pg.Client(this.dbConnectionString);
+        break;
+      }
+      case "sqlite": {
+        const sqlite3mod = await import("sqlite3");
+        this.sqlite3 = sqlite3mod.default.verbose();
+        this.db = new this.sqlite3.Database(this.dbConnectionString, (err) => {
+          if (err) {
+            console.error("Error opening SQLite database:", err.message);
+          }
+        });
+        break;
+      }
+      case "mongodb": {
+        const mongodb = await import("mongodb");
+        this.MongoClient = mongodb.MongoClient;
+        this.mongoClient = new this.MongoClient(this.dbConnectionString, {
+          useUnifiedTopology: true,
+        });
+        break;
+      }
+      default:
+        throw new Error("Unsupported database type: " + this.dbType);
+    }
+    this._initialized = true;
   }
 
   async getTokens() {
-    // Implementation depends on your database
-    throw new Error(
-      "DatabaseTokenStorage requires implementation for your specific database"
-    );
+    await this.init();
+    switch (this.dbType) {
+      case "postgres":
+        try {
+          await this.client.connect();
+          const res = await this.client.query(
+            `SELECT tokens FROM ${this.tableName} WHERE app_id = $1 LIMIT 1`,
+            [this.appId]
+          );
+          await this.client.end();
+          if (res.rows.length === 0) return {};
+          return res.rows[0].tokens;
+        } catch (error) {
+          const helpMsg =
+            "\n❌ Unable to read tokens from PostgreSQL database.\n" +
+            "Original error: " +
+            error.message;
+          console.error(helpMsg);
+          process.emitWarning(helpMsg, { code: "TOKEN_DB_READ_FAILED" });
+          return {};
+        }
+
+      case "sqlite":
+        return new Promise((resolve, reject) => {
+          this.db.get(
+            `SELECT tokens FROM ${this.tableName} WHERE app_id = ? LIMIT 1`,
+            [this.appId],
+            (err, row) => {
+              if (err) {
+                const helpMsg =
+                  "\n❌ Unable to read tokens from SQLite database.\n" +
+                  "Original error: " +
+                  err.message;
+                console.error(helpMsg);
+                process.emitWarning(helpMsg, { code: "TOKEN_DB_READ_FAILED" });
+                return resolve({});
+              }
+              if (!row) return resolve({});
+              try {
+                resolve(
+                  typeof row.tokens === "string"
+                    ? JSON.parse(row.tokens)
+                    : row.tokens
+                );
+              } catch (parseErr) {
+                const helpMsg =
+                  "\n❌ Failed to parse tokens from SQLite database.\n" +
+                  "Original error: " +
+                  parseErr.message;
+                console.error(helpMsg);
+                process.emitWarning(helpMsg, { code: "TOKEN_DB_PARSE_FAILED" });
+                resolve({});
+              }
+            }
+          );
+        });
+
+      case "mongodb":
+        try {
+          await this.mongoClient.connect();
+          const db = this.mongoClient.db();
+          const collection = db.collection(this.tableName);
+          const doc = await collection.findOne({ app_id: this.appId });
+          await this.mongoClient.close();
+          if (!doc || !doc.tokens) return {};
+          return doc.tokens;
+        } catch (error) {
+          const helpMsg =
+            "\n❌ Unable to read tokens from MongoDB.\n" +
+            "Original error: " +
+            error.message;
+          console.error(helpMsg);
+          process.emitWarning(helpMsg, { code: "TOKEN_DB_READ_FAILED" });
+          return {};
+        }
+
+      default:
+        throw new Error(
+          "DatabaseTokenStorage requires implementation for your specific database"
+        );
+    }
   }
 
   async setTokens(tokens) {
-    // Implementation depends on your database
-    throw new Error(
-      "DatabaseTokenStorage requires implementation for your specific database"
-    );
+    await this.init();
+    switch (this.dbType) {
+      case "postgres":
+        try {
+          await this.client.connect();
+          await this.client.query(
+            `INSERT INTO ${this.tableName} (app_id, tokens)
+           VALUES ($1, $2)
+           ON CONFLICT (app_id)
+           DO UPDATE SET tokens = EXCLUDED.tokens`,
+            [this.appId, tokens]
+          );
+          await this.client.end();
+        } catch (error) {
+          const helpMsg =
+            "\n❌ Unable to write tokens to PostgreSQL database.\n" +
+            "Original error: " +
+            error.message;
+          console.error(helpMsg);
+          process.emitWarning(helpMsg, { code: "TOKEN_DB_WRITE_FAILED" });
+          throw new Error(helpMsg);
+        }
+        return;
+
+      case "sqlite":
+        return new Promise((resolve, reject) => {
+          this.db.run(
+            `INSERT OR REPLACE INTO ${this.tableName} (app_id, tokens) VALUES (?, ?)`,
+            [this.appId, JSON.stringify(tokens)],
+            function (err) {
+              if (err) {
+                const helpMsg =
+                  "\n❌ Unable to write tokens to SQLite database.\n" +
+                  "Original error: " +
+                  err.message;
+                console.error(helpMsg);
+                process.emitWarning(helpMsg, { code: "TOKEN_DB_WRITE_FAILED" });
+                return reject(new Error(helpMsg));
+              }
+              resolve();
+            }
+          );
+        });
+
+      case "mongodb":
+        try {
+          await this.mongoClient.connect();
+          const db = this.mongoClient.db();
+          const collection = db.collection(this.tableName);
+          await collection.updateOne(
+            { app_id: this.appId },
+            { $set: { tokens } },
+            { upsert: true }
+          );
+          await this.mongoClient.close();
+        } catch (error) {
+          const helpMsg =
+            "\n❌ Unable to write tokens to MongoDB.\n" +
+            "Original error: " +
+            error.message;
+          console.error(helpMsg);
+          process.emitWarning(helpMsg, { code: "TOKEN_DB_WRITE_FAILED" });
+          throw new Error(helpMsg);
+        }
+        return;
+
+      default:
+        throw new Error(
+          "DatabaseTokenStorage requires implementation for your specific database"
+        );
+    }
   }
 }

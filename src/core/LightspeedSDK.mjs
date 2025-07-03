@@ -146,7 +146,14 @@ export class LightspeedSDKCore {
 
       return this.token;
     } catch (error) {
-      return this.handleError("GET TOKEN ERROR", error);
+      const helpMsg =
+        "\n❌ Token refresh failed. Your refresh token may be expired or revoked.\n" +
+        "👉 Please re-authenticate using the SDK's CLI or obtain a new refresh token.\n" +
+        "Original error: " +
+        (error?.message || error);
+      console.error(helpMsg);
+      process.emitWarning(helpMsg, { code: "TOKEN_REFRESH_FAILED" });
+      throw new Error(helpMsg);
     }
   }
 
@@ -251,9 +258,16 @@ export class LightspeedSDKCore {
       const newToken = await this.getToken();
       return { success: true, message: "Tokens refreshed successfully" };
     } catch (error) {
+      const helpMsg =
+        "\n❌ Token refresh failed. Your refresh token may be expired or revoked.\n" +
+        "👉 Please re-authenticate using the SDK's CLI or obtain a new refresh token.\n" +
+        "Original error: " +
+        (error?.message || error);
+      console.error(helpMsg);
+      process.emitWarning(helpMsg, { code: "TOKEN_REFRESH_FAILED" });
       return {
         success: false,
-        message: "Token refresh failed",
+        message: helpMsg,
         error: error.message,
       };
     }
