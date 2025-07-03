@@ -2,7 +2,7 @@
 
 A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.1.1** — Now with secure encrypted token storage using Node.js crypto.
+**Current Version: 3.1.2** — Now with secure encrypted token storage using Node.js crypto.
 
 ---
 
@@ -17,12 +17,15 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
     - [Available CLI Commands](#available-cli-commands)
       - [Authentication \& Setup](#authentication--setup)
       - [Storage Management](#storage-management)
+      - [Email Testing](#email-testing)
     - [CLI Features](#cli-features)
       - [Interactive Storage Selection](#interactive-storage-selection)
       - [OAuth Authentication Flow](#oauth-authentication-flow)
+      - [Token Management](#token-management)
       - [Database Setup Wizard](#database-setup-wizard)
       - [Token Migration](#token-migration)
       - [Security Features](#security-features)
+      - [Email Notifications](#email-notifications)
     - [CLI Configuration](#cli-configuration)
     - [CLI Examples](#cli-examples)
   - [Features](#features)
@@ -31,8 +34,9 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
   - [Environment Variables](#environment-variables)
   - [Installation](#installation)
   - [Quick Start](#quick-start)
+    - [Modern CLI-First Approach (Recommended)](#modern-cli-first-approach-recommended)
     - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
-    - [Recommended Usage (Persistent Storage)](#recommended-usage-persistent-storage)
+    - [Manual Token Management (Advanced)](#manual-token-management-advanced)
       - [File-Based Storage](#file-based-storage)
       - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
   - [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
@@ -302,17 +306,18 @@ The CLI makes it easy to get started with the SDK without writing any configurat
 
 ## Features
 
-- **NEW: Encrypted token storage** — Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
+- **Interactive CLI** — Complete command-line interface for authentication, token management, and database setup
+- **Encrypted token storage** — Secure your tokens at rest with built-in AES-256-GCM encryption using Node.js crypto
+- **Email notifications** — Automatic alerts for token refresh failures with configurable SMTP settings
+- **Flexible storage backends** — File-based, encrypted, database (SQLite, PostgreSQL, MongoDB), or custom storage options
+- **Smart token management** — Automatic refresh, rotation handling, and persistent storage
+- **Auto-retry on authentication errors** — Automatically refreshes tokens and retries failed requests
 - Easy-to-use methods for all major Lightspeed Retail endpoints
-- Built-in handling of API rate limits
-- Automatic token management and refresh
-- **NEW: Auto-retry on authentication errors** — Automatically refreshes tokens and retries failed requests
-- Support for paginated responses
+- Built-in handling of API rate limits and pagination
 - Retry logic for transient network issues
-- **NEW: Flexible token storage** — File-based, encrypted, database, or custom storage options
-- **NEW: Advanced search** — Search items and customers with flexible queries
-- **NEW: Bulk operations** — Update multiple items efficiently
-- **NEW: Inventory management** — Low stock alerts and category-based queries
+- Advanced search capabilities for items and customers
+- Bulk operations for efficient data updates
+- Inventory management with low stock alerts and category queries
 - Support for both CommonJS and ES modules
 
 ## Smart Token Management
@@ -369,6 +374,52 @@ npm install lightspeed-retail-sdk
 
 ## Quick Start
 
+### Modern CLI-First Approach (Recommended)
+
+The easiest way to get started is using the interactive CLI to handle authentication:
+
+```bash
+# 1. Install the SDK
+npm install lightspeed-retail-sdk
+
+# 2. Authenticate using CLI (one-time setup)
+npm run cli login
+
+# 3. Use the SDK in your code
+```
+
+Then in your code:
+
+```javascript
+import LightspeedRetailSDK, {
+  FileTokenStorage,
+  EncryptedTokenStorage,
+} from "lightspeed-retail-sdk";
+import dotenv from "dotenv";
+dotenv.config();
+
+// Use the same storage configuration as your CLI
+const fileStorage = new FileTokenStorage(
+  process.env.LIGHTSPEED_TOKEN_FILE || "./tokens/encrypted-tokens.json"
+);
+const tokenStorage = process.env.LIGHTSPEED_ENCRYPTION_KEY
+  ? new EncryptedTokenStorage(
+      fileStorage,
+      process.env.LIGHTSPEED_ENCRYPTION_KEY
+    )
+  : fileStorage;
+
+const api = new LightspeedRetailSDK({
+  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+  clientID: process.env.LIGHTSPEED_CLIENT_ID,
+  clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
+  tokenStorage,
+});
+
+// The SDK will automatically use stored tokens and refresh as needed
+export default api;
+```
+
 ### Basic Usage (In-Memory Storage)
 
 ```javascript
@@ -385,7 +436,9 @@ const api = new LightspeedRetailSDK({
 
 ⚠️ **Warning**: Basic usage stores tokens in memory only. Tokens will be lost on application restart, which may cause issues with Lightspeed's new token rotation system.
 
-### Recommended Usage (Persistent Storage)
+### Manual Token Management (Advanced)
+
+If you prefer to handle authentication manually without the CLI:
 
 #### File-Based Storage
 
@@ -458,7 +511,19 @@ Keep your encryption key secure and never commit it to version control!
 
 ## Database Storage (PostgreSQL, SQLite, and MongoDB)
 
-> **Important:** You must create the required table or collection before using the SDK. The SDK does **not** auto-create tables or collections. Manual creation is required for all environments.
+### Database Setup
+
+#### Option 1: Use the CLI (Recommended)
+
+```bash
+npm run cli setup-db
+```
+
+The CLI will guide you through creating the required tables/collections for your database.
+
+#### Option 2: Manual Setup
+
+If you prefer to create the database schema manually, use the schemas below:
 
 ### PostgreSQL Schema
 
@@ -482,6 +547,25 @@ CREATE TABLE oauth_tokens (
 ```
 
 - `tokens` is stored as a JSON string.
+
+### MongoDB Schema
+
+For MongoDB, no manual schema creation is required. The SDK will create documents with this structure:
+
+```javascript
+{
+  app_id: "default",
+  tokens: {
+    access_token: "...",
+    refresh_token: "...",
+    expires_at: "2025-01-01T00:00:00.000Z",
+    expires_in: 3600
+  }
+}
+```
+
+- The collection name is configurable (default: `oauth_tokens`)
+- A unique index on `app_id` is automatically created
 
 ---
 
