@@ -27,6 +27,7 @@
     "cli:whoami": "node src/bin/cli.js whoami",
     "cli:migrate-tokens": "node src/bin/cli.js migrate-tokens",
     "cli:test-email": "node src/bin/cli.js test-email",
+    "cli:refresh-token": "node src/bin/cli.js refresh-token",
     "build": "npm run clean && npm run prebuild && npm run build:esm && npm run build:cjs && npm run fix-paths && npm run fix-exports",
     "fix-exports": "echo '\n// Convenience export for CommonJS\nmodule.exports = exports.default;\nmodule.exports.default = exports.default;\nmodule.exports.FileTokenStorage = exports.FileTokenStorage;\nmodule.exports.InMemoryTokenStorage = exports.InMemoryTokenStorage;\nmodule.exports.DatabaseTokenStorage = exports.DatabaseTokenStorage;' >> dist/index.cjs",
     "build:esm": "cp index.mjs dist/index.mjs && cp -r src dist/",

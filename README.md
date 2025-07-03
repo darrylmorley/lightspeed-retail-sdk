@@ -108,6 +108,9 @@ npm run cli login
 # Check current token status
 npm run cli token-status
 
+# Manually refresh stored access token
+npm run cli refresh-token
+
 # View your account information
 npm run cli whoami
 ```
@@ -155,6 +158,36 @@ npm run cli login
 2. Opens browser for OAuth authorization
 3. Automatically exchanges code for tokens
 4. Stores tokens in your chosen backend
+
+#### Token Management
+
+##### Manual Token Refresh
+
+```bash
+npm run cli refresh-token
+```
+
+Use this command to:
+
+- Test your refresh token before it expires
+- Force a token refresh for testing purposes
+- Update access tokens without full re-authentication
+- Verify that your stored credentials are working
+
+The command will:
+
+- Show current token expiration status
+- Attempt to refresh using stored refresh token
+- Display the new token information
+- Handle token rotation if enabled by Lightspeed
+
+##### Token Status Checking
+
+```bash
+npm run cli token-status
+```
+
+Shows detailed information about your stored tokens including expiration times.
 
 #### Database Setup Wizard
 

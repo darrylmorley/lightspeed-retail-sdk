@@ -998,4 +998,124 @@ async function selectStorageBackend() {
   return fileStorage;
 }
 
+program
+  .command("refresh-token")
+  .description(
+    "Manually refresh the stored access token using the refresh token"
+  )
+  .action(async () => {
+    let storageBackend = null;
+    try {
+      console.log("🔄 Refreshing stored access token...\n");
+
+      // Get storage backend
+      storageBackend = await selectStorageBackend();
+
+      // Get existing tokens
+      const tokens = await storageBackend.getTokens();
+      if (!tokens || !tokens.refresh_token) {
+        console.error(
+          "❌ No refresh token found in storage. Please login first."
+        );
+        console.log("\n💡 Run: npm run cli:login");
+        process.exit(1);
+      }
+
+      console.log("📋 Current token status:");
+      if (tokens.expires_at) {
+        const expires = new Date(tokens.expires_at);
+        const now = new Date();
+        const mins = Math.round((expires - now) / 60000);
+        console.log(`   Expires: ${tokens.expires_at} (in ${mins} min)`);
+      }
+      console.log(
+        `   Refresh Token: ${tokens.refresh_token.substring(0, 20)}...`
+      );
+
+      // Get required credentials
+      const clientID = process.env.LIGHTSPEED_CLIENT_ID;
+      const clientSecret = process.env.LIGHTSPEED_CLIENT_SECRET;
+
+      if (!clientID || !clientSecret) {
+        console.error(
+          "❌ Missing client credentials in environment variables:"
+        );
+        console.log(
+          "   Required: LIGHTSPEED_CLIENT_ID, LIGHTSPEED_CLIENT_SECRET"
+        );
+        console.log("\n💡 Add these to your .env file or environment");
+        process.exit(1);
+      }
+
+      console.log("\n🔄 Attempting token refresh...");
+
+      try {
+        // Use the SDK to refresh the token
+        const sdk = new LightspeedRetailSDK({
+          accountID: process.env.LIGHTSPEED_ACCOUNT_ID || "unknown",
+          clientID,
+          clientSecret,
+          refreshToken: tokens.refresh_token,
+          tokenStorage: storageBackend,
+        });
+
+        // Force a token refresh by making an API call
+        // The SDK will automatically refresh if needed
+        await sdk.getAccount();
+
+        // Get the updated tokens
+        const updatedTokens = await storageBackend.getTokens();
+
+        console.log("\n✅ Token refresh successful!");
+        console.log("📋 Updated token status:");
+        console.log(
+          `   New Access Token: ${updatedTokens.access_token.substring(0, 20)}...`
+        );
+        if (updatedTokens.expires_at) {
+          const expires = new Date(updatedTokens.expires_at);
+          const now = new Date();
+          const mins = Math.round((expires - now) / 60000);
+          console.log(
+            `   Expires: ${updatedTokens.expires_at} (in ${mins} min)`
+          );
+        }
+
+        // Check if refresh token changed (token rotation)
+        if (updatedTokens.refresh_token !== tokens.refresh_token) {
+          console.log("🔄 Refresh token was rotated (updated for security)");
+          console.log(
+            `   New Refresh Token: ${updatedTokens.refresh_token.substring(0, 20)}...`
+          );
+        } else {
+          console.log("🔒 Refresh token unchanged");
+        }
+      } catch (error) {
+        console.error("\n❌ Token refresh failed:", error.message);
+
+        if (error.message.includes("400") || error.message.includes("401")) {
+          console.log("\n💡 Possible causes:");
+          console.log("   - Refresh token has expired");
+          console.log("   - Refresh token has been revoked");
+          console.log("   - Invalid client credentials");
+          console.log("\n🔧 Solutions:");
+          console.log("   - Re-authenticate: npm run cli:login");
+          console.log("   - Check your client ID and secret");
+          console.log("   - Contact Lightspeed if the issue persists");
+        } else if (
+          error.message.includes("network") ||
+          error.message.includes("ENOTFOUND")
+        ) {
+          console.log("\n💡 Network issue - check your internet connection");
+        }
+
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error("\n❌ Command failed:", error.message);
+      process.exit(1);
+    } finally {
+      await cleanupStorageBackend(storageBackend);
+    }
+  });
+
 program.parse(process.argv);
