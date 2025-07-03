@@ -25,7 +25,9 @@
     "build:main": "swc index.mjs -o dist/index.cjs",
     "fix-paths": "find dist -name '*.cjs' -exec sed -i '' 's/\\.mjs/.cjs/g' {} +",
     "prebuild": "mkdir -p dist/src/core dist/src/storage",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "generate-key": "node scripts/generate-key.js",
+    "publish": "npm run build && npm publish"
   },
   "files": [
     "dist/",
