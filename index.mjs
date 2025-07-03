@@ -10,6 +10,32 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     super(opts, InMemoryTokenStorage);
   }
 
+  /**
+   * Fetches account info for the current accountID.
+   * @param {string[]} [relations] - Optional relations to load (array or comma-separated string)
+   * @returns {Promise<Object>} Account info object from Lightspeed API
+   */
+  async getAccount(relations) {
+    let url = `${this.baseUrl}/${this.accountID}.json`;
+    if (relations) {
+      const relStr = Array.isArray(relations) ? relations.join(",") : relations;
+      url += `?load_relations=${relStr}`;
+    }
+    const options = {
+      url,
+      method: "GET",
+    };
+    try {
+      const response = await this.executeApiRequest(options);
+      // The API may return { data: { Account: {...} } } or just { Account: {...} }
+      if (response?.data?.Account) return response.data;
+      if (response?.Account) return response;
+      return response;
+    } catch (error) {
+      return this.handleError("GET ACCOUNT ERROR", error);
+    }
+  }
+
   // Get customer by ID
   async getCustomer(id, relations) {
     const options = {
