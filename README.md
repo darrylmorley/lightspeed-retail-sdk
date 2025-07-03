@@ -2,7 +2,7 @@
 
 A JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient way to access Lightspeed Retail's functionalities, including customer, item, order management, and more.
 
-**Current Version: 3.0.2** - Updated with new OAuth system support and enhanced token management.
+**Current Version: 3.1.1** - Updated with secure encrypted token storage using Node.js crypto.
 
 ## 🚨 Important Update - New OAuth System
 
