@@ -2,7 +2,7 @@
 
 A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.1.2** — Now with secure encrypted token storage using Node.js crypto.
+**Current Version: 3.2.0** — Now with secure encrypted token storage using Node.js crypto. Useful CLI tools, database tools & email warnings on auth failure.
 
 ---
 
@@ -22,6 +22,8 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
       - [Interactive Storage Selection](#interactive-storage-selection)
       - [OAuth Authentication Flow](#oauth-authentication-flow)
       - [Token Management](#token-management)
+        - [Manual Token Refresh](#manual-token-refresh)
+        - [Token Status Checking](#token-status-checking)
       - [Database Setup Wizard](#database-setup-wizard)
       - [Token Migration](#token-migration)
       - [Security Features](#security-features)
@@ -40,8 +42,12 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
       - [File-Based Storage](#file-based-storage)
       - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
   - [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
+    - [Database Setup](#database-setup)
+      - [Option 1: Use the CLI (Recommended)](#option-1-use-the-cli-recommended)
+      - [Option 2: Manual Setup](#option-2-manual-setup)
     - [PostgreSQL Schema](#postgresql-schema)
     - [SQLite Schema](#sqlite-schema)
+    - [MongoDB Schema](#mongodb-schema)
     - [Example: Using DatabaseTokenStorage](#example-using-databasetokenstorage)
     - [Notes](#notes)
     - [Custom Storage Interface (Advanced)](#custom-storage-interface-advanced)
