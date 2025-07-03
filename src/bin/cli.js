@@ -688,6 +688,133 @@ program
     }
   });
 
+program
+  .command("test-email")
+  .description("Test email notification for token refresh failures")
+  .option(
+    "-a, --account-id <accountId>",
+    "Account ID to use in test email",
+    "TEST-ACCOUNT"
+  )
+  .action(async (options) => {
+    try {
+      console.log(
+        "🧪 Testing email notification for token refresh failure...\n"
+      );
+
+      // Check if SMTP configuration is available
+      if (
+        !process.env.SMTP_HOST ||
+        !process.env.SMTP_USER ||
+        !process.env.ALERT_EMAIL
+      ) {
+        console.error("❌ Email test failed: SMTP configuration not found");
+        console.log("\n💡 Required environment variables:");
+        console.log("   - SMTP_HOST");
+        console.log("   - SMTP_USER");
+        console.log("   - SMTP_PASS");
+        console.log("   - ALERT_EMAIL");
+        console.log("   - SMTP_PORT (optional, defaults to 587)");
+        console.log("   - SMTP_SECURE (optional, defaults to false)");
+        console.log("   - SMTP_FROM (optional, defaults to SMTP_USER)");
+        console.log("\n📝 See README.md for SMTP configuration examples");
+        process.exit(1);
+      }
+
+      console.log("📧 SMTP Configuration found:");
+      console.log(`   Host: ${process.env.SMTP_HOST}`);
+      console.log(`   Port: ${process.env.SMTP_PORT || "587"}`);
+      console.log(`   User: ${process.env.SMTP_USER}`);
+      console.log(`   Alert Email: ${process.env.ALERT_EMAIL}`);
+      console.log(
+        `   Secure: ${process.env.SMTP_SECURE === "true" ? "Yes" : "No"}`
+      );
+
+      // Create a test error to simulate token refresh failure
+      const testError = new Error(
+        "Simulated token refresh failure for testing"
+      );
+      testError.status = 401;
+      testError.code = "TOKEN_REFRESH_FAILED";
+
+      // Import the email function from the SDK
+      // Since the email function is internal, we'll implement our own test version
+      console.log("\n📤 Attempting to send test email...");
+
+      // Call our test email function
+      await sendTestTokenRefreshFailureEmail(testError, options.accountId);
+
+      console.log("\n✅ Email test completed!");
+      console.log("\n💡 Check your email inbox for the test notification.");
+      console.log("   If you don't receive the email, check:");
+      console.log("   - SMTP configuration");
+      console.log("   - Spam/junk folder");
+      console.log("   - Email server logs");
+    } catch (error) {
+      console.error("\n❌ Email test failed:", error.message);
+      if (error.code === "EAUTH") {
+        console.log(
+          "\n💡 Authentication failed - check SMTP_USER and SMTP_PASS"
+        );
+      } else if (error.code === "ECONNECTION" || error.code === "ENOTFOUND") {
+        console.log("\n💡 Connection failed - check SMTP_HOST and SMTP_PORT");
+      } else if (error.code === "EMESSAGE") {
+        console.log("\n💡 Message rejected - check ALERT_EMAIL address");
+      }
+      process.exit(1);
+    }
+  });
+
+// Test email function (mirrors the SDK implementation)
+async function sendTestTokenRefreshFailureEmail(error, accountID) {
+  try {
+    const nodemailer = await import("nodemailer");
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: process.env.ALERT_EMAIL,
+      subject: `🧪 TEST: Lightspeed SDK Token Refresh Failed - Account ${accountID}`,
+      html: `
+        <h2>🧪 TEST: Lightspeed SDK Alert</h2>
+        <p><strong>This is a test email for token refresh failure notifications.</strong></p>
+        
+        <h3>Test Details:</h3>
+        <ul>
+          <li><strong>Account ID:</strong> ${accountID}</li>
+          <li><strong>Time:</strong> ${new Date().toISOString()}</li>
+          <li><strong>Simulated Error:</strong> ${error.message}</li>
+          <li><strong>Test Status:</strong> ✅ Email system working correctly</li>
+        </ul>
+
+        <h3>What this means:</h3>
+        <p>Your email notification system is properly configured! In a real scenario, you would:</p>
+        <ol>
+          <li>Re-authenticate using the CLI: <code>npm run cli login</code></li>
+          <li>Or obtain a new refresh token from Lightspeed</li>
+          <li>Check your application logs for more details</li>
+        </ol>
+
+        <p><em>This is a test alert from your Lightspeed Retail SDK CLI.</em></p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("📧 Test email sent successfully");
+  } catch (emailError) {
+    throw new Error(`Failed to send test email: ${emailError.message}`);
+  }
+}
+
 async function selectStorageBackend() {
   const { storageType } = await inquirer.prompt([
     {

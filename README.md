@@ -125,6 +125,16 @@ npm run cli reset
 npm run cli migrate-tokens
 ```
 
+#### Email Testing
+
+```bash
+# Test email notification system
+npm run cli test-email
+
+# Test with custom account ID
+npm run cli test-email --account-id "YOUR-ACCOUNT-ID"
+```
+
 ### CLI Features
 
 #### Interactive Storage Selection
@@ -174,6 +184,31 @@ npm run cli migrate-tokens
 - **Secure credential prompting** - Sensitive inputs are handled securely
 - **Environment variable support** - Use `.env` files for configuration
 - **Connection cleanup** - Proper database connection management
+
+#### Email Notifications
+
+The SDK can automatically send email alerts when token refresh fails:
+
+```bash
+# Configure SMTP settings in your .env file
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false           # true for 465, false for other ports
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password # Use app passwords for Gmail
+SMTP_FROM=your-email@gmail.com  # Optional, defaults to SMTP_USER
+ALERT_EMAIL=admin@yourcompany.com
+
+# Test the email system
+npm run cli test-email
+```
+
+**Email Features:**
+
+- Automatic alerts on token refresh failures
+- Detailed error information and recovery steps
+- Configurable SMTP settings
+- Built-in test command for validation
 
 ### CLI Configuration
 
@@ -276,6 +311,19 @@ LIGHTSPEED_CLIENT_SECRET=your_client_secret
 LIGHTSPEED_ACCESS_TOKEN=your_access_token
 LIGHTSPEED_REFRESH_TOKEN=your_refresh_token
 LIGHTSPEED_TOKEN_EXPIRES_AT=2025-01-01T00:00:00.000Z
+
+# Storage Configuration (CLI only)
+LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
+LIGHTSPEED_ENCRYPTION_KEY=your-64-character-encryption-key
+
+# Email Notifications (Optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=your-email@gmail.com
+ALERT_EMAIL=admin@yourcompany.com
 ```
 
 ⚠️ **Note**: Environment variables are used as fallback when no stored tokens are found. Once tokens are stored via your chosen storage method, those take priority.

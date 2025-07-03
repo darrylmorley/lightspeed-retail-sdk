@@ -4,6 +4,68 @@ const operationUnits = { GET: 1, POST: 10, PUT: 10 };
 const getRequestUnits = (operation) => operationUnits[operation] || 10;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Email notification helper
+async function sendTokenRefreshFailureEmail(error, accountID) {
+  try {
+    // Only send email if nodemailer config is available
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.ALERT_EMAIL
+    ) {
+      console.warn("Email notification skipped - SMTP configuration not found");
+      return;
+    }
+
+    const nodemailer = await import("nodemailer");
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: process.env.ALERT_EMAIL,
+      subject: `🚨 Lightspeed SDK Token Refresh Failed - Account ${accountID}`,
+      html: `
+        <h2>🚨 Lightspeed SDK Alert</h2>
+        <p><strong>Token refresh has failed for your Lightspeed Retail SDK.</strong></p>
+        
+        <h3>Details:</h3>
+        <ul>
+          <li><strong>Account ID:</strong> ${accountID}</li>
+          <li><strong>Time:</strong> ${new Date().toISOString()}</li>
+          <li><strong>Error:</strong> ${error.message}</li>
+        </ul>
+
+        <h3>Action Required:</h3>
+        <p>Your application may lose access to the Lightspeed API. Please:</p>
+        <ol>
+          <li>Re-authenticate using the CLI: <code>npm run cli login</code></li>
+          <li>Or obtain a new refresh token from Lightspeed</li>
+          <li>Check your application logs for more details</li>
+        </ol>
+
+        <p><em>This is an automated alert from your Lightspeed Retail SDK.</em></p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("📧 Token refresh failure email sent successfully");
+  } catch (emailError) {
+    console.warn(
+      "Failed to send token refresh failure email:",
+      emailError.message
+    );
+  }
+}
+
 export class LightspeedSDKCore {
   static BASE_URL = "https://api.lightspeedapp.com/API/V3/Account";
   static TOKEN_URL = "https://cloud.lightspeedapp.com/auth/oauth/token";
@@ -153,6 +215,10 @@ export class LightspeedSDKCore {
         (error?.message || error);
       console.error(helpMsg);
       process.emitWarning(helpMsg, { code: "TOKEN_REFRESH_FAILED" });
+
+      // Send email notification about token refresh failure
+      await sendTokenRefreshFailureEmail(error, this.accountID);
+
       throw new Error(helpMsg);
     }
   }
@@ -265,6 +331,10 @@ export class LightspeedSDKCore {
         (error?.message || error);
       console.error(helpMsg);
       process.emitWarning(helpMsg, { code: "TOKEN_REFRESH_FAILED" });
+
+      // Send email notification about token refresh failure
+      await sendTokenRefreshFailureEmail(error, this.accountID);
+
       return {
         success: false,
         message: helpMsg,
