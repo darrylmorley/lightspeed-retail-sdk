@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import LightspeedRetailSDK from "./dist/index.mjs";
-import { FileTokenStorage } from "./dist/src/storage/TokenStorage.mjs";
+import LightspeedRetailSDK from "../dist/index.mjs";
+import { FileTokenStorage } from "../dist/src/storage/TokenStorage.mjs";
 import dotenv from "dotenv";
 
 dotenv.config();

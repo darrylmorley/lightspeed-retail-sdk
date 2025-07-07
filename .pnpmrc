@@ -1,0 +1,8 @@
+# Fix store directory to prevent version switching issues
+
+store-dir=/Users/darryl/Library/pnpm/store/v3
+
+## Other useful settings
+
+auto-install-peers=true
+strict-peer-dependencies=false

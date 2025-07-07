@@ -5,6 +5,7 @@
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
+  "packageManager": "pnpm@10.12.4",
   "exports": {
     ".": {
       "require": "./dist/index.cjs",
