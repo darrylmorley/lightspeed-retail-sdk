@@ -113,45 +113,45 @@ The CLI provides an interactive way to:
 
 ### Available CLI Commands
 
-> **Note**: The examples below assume global installation (`npm install -g lightspeed-retail-sdk`). If you installed locally, prefix commands with `npx` (e.g., `npx lightspeed-sdk login`) or use `npm run cli <command>` if working within the SDK's own directory.
+> **Note**: The examples below assume global installation (`npm install -g lightspeed-retail-sdk`). If you installed locally, prefix commands with `npx` (e.g., `npx lightspeed-retail-sdk login`).
 
 #### Authentication & Setup
 
 ```bash
 # Start OAuth authentication flow
-lightspeed-sdk login
+lightspeed-retail-sdk login
 
 # Check current token status
-lightspeed-sdk token-status
+lightspeed-retail-sdk token-status
 
 # Manually refresh stored access token
-lightspeed-sdk refresh-token
+lightspeed-retail-sdk refresh-token
 
 # View your account information
-lightspeed-sdk whoami
+lightspeed-retail-sdk whoami
 ```
 
 #### Storage Management
 
 ```bash
 # Set up database storage (SQLite, Postgres, MongoDB)
-lightspeed-sdk setup-db
+lightspeed-retail-sdk setup-db
 
 # Clear stored tokens
-lightspeed-sdk reset
+lightspeed-retail-sdk reset
 
 # Migrate tokens between storage backends
-lightspeed-sdk migrate-tokens
+lightspeed-retail-sdk migrate-tokens
 ```
 
 #### Email Testing
 
 ```bash
 # Test email notification system
-lightspeed-sdk test-email
+lightspeed-retail-sdk test-email
 
 # Test with custom account ID
-lightspeed-sdk test-email --account-id "YOUR-ACCOUNT-ID"
+lightspeed-retail-sdk test-email --account-id "YOUR-ACCOUNT-ID"
 ```
 
 ### CLI Features
@@ -167,7 +167,7 @@ The CLI automatically prompts you to choose your preferred storage backend:
 #### OAuth Authentication Flow
 
 ```bash
-lightspeed-sdk login
+lightspeed-retail-sdk login
 ```
 
 1. Prompts for your Lightspeed credentials
@@ -180,7 +180,7 @@ lightspeed-sdk login
 ##### Manual Token Refresh
 
 ```bash
-lightspeed-sdk refresh-token
+lightspeed-retail-sdk refresh-token
 ```
 
 Use this command to:
@@ -200,7 +200,7 @@ The command will:
 ##### Token Status Checking
 
 ```bash
-lightspeed-sdk token-status
+lightspeed-retail-sdk token-status
 ```
 
 Shows detailed information about your stored tokens including expiration times.
@@ -208,7 +208,7 @@ Shows detailed information about your stored tokens including expiration times.
 #### Database Setup Wizard
 
 ```bash
-lightspeed-sdk setup-db
+lightspeed-retail-sdk setup-db
 ```
 
 - Guides you through database connection setup
@@ -219,7 +219,7 @@ lightspeed-sdk setup-db
 #### Token Migration
 
 ```bash
-lightspeed-sdk migrate-tokens
+lightspeed-retail-sdk migrate-tokens
 ```
 
 - Move tokens between any supported storage backends
@@ -249,7 +249,7 @@ SMTP_FROM=your-email@gmail.com  # Optional, defaults to SMTP_USER
 ALERT_EMAIL=admin@yourcompany.com
 
 # Test the email system
-lightspeed-sdk test-email
+lightspeed-retail-sdk test-email
 ```
 
 **Email Features:**
@@ -290,19 +290,19 @@ LIGHTSPEED_REDIRECT_URL=your_lightspeed_redirect_url
 node -e "console.log('LIGHTSPEED_ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
 
 # 2. Set up database storage
-lightspeed-sdk setup-db
+lightspeed-retail-sdk setup-db
 
 # 3. Authenticate and store tokens
-lightspeed-sdk login
+lightspeed-retail-sdk login
 
 # 4. Verify setup
-lightspeed-sdk whoami
+lightspeed-retail-sdk whoami
 ```
 
 **Migrate from file to database:**
 
 ```bash
-lightspeed-sdk migrate-tokens
+lightspeed-retail-sdk migrate-tokens
 # Select "Encrypted File" as source
 # Select "Encrypted Database" as destination
 # Choose your database type and connection
@@ -311,7 +311,7 @@ lightspeed-sdk migrate-tokens
 **Check token status:**
 
 ```bash
-lightspeed-sdk token-status
+lightspeed-retail-sdk token-status
 # Shows token validity, expiration, and storage location
 ```
 
@@ -396,10 +396,10 @@ npm install -g lightspeed-retail-sdk
 Once installed globally, you can use the CLI directly:
 
 ```bash
-lightspeed-sdk help
-lightspeed-sdk login
-lightspeed-sdk token-status
-lightspeed-sdk whoami
+lightspeed-retail-sdk help
+lightspeed-retail-sdk login
+lightspeed-retail-sdk token-status
+lightspeed-retail-sdk whoami
 ```
 
 ### Local Installation
@@ -413,9 +413,9 @@ npm install lightspeed-retail-sdk
 Then use the CLI with `npx`:
 
 ```bash
-npx lightspeed-sdk help
-npx lightspeed-sdk login
-npx lightspeed-sdk token-status
+npx lightspeed-retail-sdk help
+npx lightspeed-retail-sdk login
+npx lightspeed-retail-sdk token-status
 ```
 
 Or add scripts to your `package.json`:
@@ -423,9 +423,9 @@ Or add scripts to your `package.json`:
 ```json
 {
   "scripts": {
-    "lightspeed-setup": "lightspeed-sdk login",
-    "lightspeed-status": "lightspeed-sdk token-status",
-    "lightspeed-refresh": "lightspeed-sdk refresh-token"
+    "lightspeed-setup": "lightspeed-retail-sdk login",
+    "lightspeed-status": "lightspeed-retail-sdk token-status",
+    "lightspeed-refresh": "lightspeed-retail-sdk refresh-token"
   }
 }
 ```
@@ -487,7 +487,7 @@ The easiest way to get started is using the interactive CLI to handle authentica
 npm install -g lightspeed-retail-sdk
 
 # 2. Authenticate using CLI (one-time setup)
-lightspeed-sdk login
+lightspeed-retail-sdk login
 
 # 3. Use the SDK in your code
 ```
@@ -499,7 +499,7 @@ lightspeed-sdk login
 npm install lightspeed-retail-sdk
 
 # 2. Authenticate using CLI (one-time setup)
-npx lightspeed-sdk login
+npx lightspeed-retail-sdk login
 
 # 3. Use the SDK in your code
 ```
@@ -632,7 +632,7 @@ Keep your encryption key secure and never commit it to version control!
 #### Option 1: Use the CLI (Recommended)
 
 ```bash
-lightspeed-sdk setup-db
+lightspeed-retail-sdk setup-db
 ```
 
 The CLI will guide you through creating the required tables/collections for your database.
