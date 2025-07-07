@@ -5,8 +5,8 @@ import dotenv from "dotenv";
 import {
   FileTokenStorage,
   EncryptedTokenStorage,
-} from "../../dist/src/storage/TokenStorage.mjs";
-import LightspeedRetailSDK from "../../dist/index.mjs";
+} from "../storage/TokenStorage.mjs";
+import LightspeedRetailSDK from "../../index.mjs";
 import inquirer from "inquirer";
 import { createInterface } from "readline";
 import axios from "axios";
@@ -921,7 +921,7 @@ async function selectStorageBackend() {
     }
     // Dynamically import DatabaseTokenStorage
     const { DatabaseTokenStorage } = await import(
-      "../../dist/src/storage/TokenStorage.mjs"
+      "../storage/TokenStorage.mjs"
     );
     const dbStorage = new DatabaseTokenStorage(dbConnectionString, {
       dbType,

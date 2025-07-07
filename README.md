@@ -35,8 +35,12 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
     - [Token Priority Order](#token-priority-order)
   - [Environment Variables](#environment-variables)
   - [Installation](#installation)
+    - [Global CLI Installation (Recommended)](#global-cli-installation-recommended)
+    - [Local Installation](#local-installation)
+    - [Configuration](#configuration)
   - [Quick Start](#quick-start)
     - [Modern CLI-First Approach (Recommended)](#modern-cli-first-approach-recommended)
+      - [Alternative: Local Installation](#alternative-local-installation)
     - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
     - [Manual Token Management (Advanced)](#manual-token-management-advanced)
       - [File-Based Storage](#file-based-storage)
@@ -109,43 +113,45 @@ The CLI provides an interactive way to:
 
 ### Available CLI Commands
 
+> **Note**: The examples below assume global installation (`npm install -g lightspeed-retail-sdk`). If you installed locally, prefix commands with `npx` (e.g., `npx lightspeed-sdk login`) or use `npm run cli <command>` if working within the SDK's own directory.
+
 #### Authentication & Setup
 
 ```bash
 # Start OAuth authentication flow
-npm run cli login
+lightspeed-sdk login
 
 # Check current token status
-npm run cli token-status
+lightspeed-sdk token-status
 
 # Manually refresh stored access token
-npm run cli refresh-token
+lightspeed-sdk refresh-token
 
 # View your account information
-npm run cli whoami
+lightspeed-sdk whoami
 ```
 
 #### Storage Management
 
 ```bash
 # Set up database storage (SQLite, Postgres, MongoDB)
-npm run cli setup-db
+lightspeed-sdk setup-db
 
 # Clear stored tokens
-npm run cli reset
+lightspeed-sdk reset
 
 # Migrate tokens between storage backends
-npm run cli migrate-tokens
+lightspeed-sdk migrate-tokens
 ```
 
 #### Email Testing
 
 ```bash
 # Test email notification system
-npm run cli test-email
+lightspeed-sdk test-email
 
 # Test with custom account ID
-npm run cli test-email --account-id "YOUR-ACCOUNT-ID"
+lightspeed-sdk test-email --account-id "YOUR-ACCOUNT-ID"
 ```
 
 ### CLI Features
@@ -161,7 +167,7 @@ The CLI automatically prompts you to choose your preferred storage backend:
 #### OAuth Authentication Flow
 
 ```bash
-npm run cli login
+lightspeed-sdk login
 ```
 
 1. Prompts for your Lightspeed credentials
@@ -174,7 +180,7 @@ npm run cli login
 ##### Manual Token Refresh
 
 ```bash
-npm run cli refresh-token
+lightspeed-sdk refresh-token
 ```
 
 Use this command to:
@@ -194,7 +200,7 @@ The command will:
 ##### Token Status Checking
 
 ```bash
-npm run cli token-status
+lightspeed-sdk token-status
 ```
 
 Shows detailed information about your stored tokens including expiration times.
@@ -202,7 +208,7 @@ Shows detailed information about your stored tokens including expiration times.
 #### Database Setup Wizard
 
 ```bash
-npm run cli setup-db
+lightspeed-sdk setup-db
 ```
 
 - Guides you through database connection setup
@@ -213,7 +219,7 @@ npm run cli setup-db
 #### Token Migration
 
 ```bash
-npm run cli migrate-tokens
+lightspeed-sdk migrate-tokens
 ```
 
 - Move tokens between any supported storage backends
@@ -243,7 +249,7 @@ SMTP_FROM=your-email@gmail.com  # Optional, defaults to SMTP_USER
 ALERT_EMAIL=admin@yourcompany.com
 
 # Test the email system
-npm run cli test-email
+lightspeed-sdk test-email
 ```
 
 **Email Features:**
@@ -280,23 +286,23 @@ LIGHTSPEED_REDIRECT_URL=your_lightspeed_redirect_url
 **Complete setup from scratch:**
 
 ```bash
-# 1. Generate encryption key
-npm run generate-key
+# 1. Generate encryption key and add to .env
+node -e "console.log('LIGHTSPEED_ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
 
 # 2. Set up database storage
-npm run cli setup-db
+lightspeed-sdk setup-db
 
 # 3. Authenticate and store tokens
-npm run cli login
+lightspeed-sdk login
 
 # 4. Verify setup
-npm run cli whoami
+lightspeed-sdk whoami
 ```
 
 **Migrate from file to database:**
 
 ```bash
-npm run cli migrate-tokens
+lightspeed-sdk migrate-tokens
 # Select "Encrypted File" as source
 # Select "Encrypted Database" as destination
 # Choose your database type and connection
@@ -305,7 +311,7 @@ npm run cli migrate-tokens
 **Check token status:**
 
 ```bash
-npm run cli token-status
+lightspeed-sdk token-status
 # Shows token validity, expiration, and storage location
 ```
 
@@ -379,6 +385,97 @@ ALERT_EMAIL=admin@yourcompany.com
 npm install lightspeed-retail-sdk
 ```
 
+### Global CLI Installation (Recommended)
+
+For the best experience, install the SDK globally to access the CLI from anywhere:
+
+```bash
+npm install -g lightspeed-retail-sdk
+```
+
+Once installed globally, you can use the CLI directly:
+
+```bash
+lightspeed-sdk help
+lightspeed-sdk login
+lightspeed-sdk token-status
+lightspeed-sdk whoami
+```
+
+### Local Installation
+
+If you prefer local installation or are using the SDK in a specific project:
+
+```bash
+npm install lightspeed-retail-sdk
+```
+
+Then use the CLI with `npx`:
+
+```bash
+npx lightspeed-sdk help
+npx lightspeed-sdk login
+npx lightspeed-sdk token-status
+```
+
+Or add scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "lightspeed-setup": "lightspeed-sdk login",
+    "lightspeed-status": "lightspeed-sdk token-status",
+    "lightspeed-refresh": "lightspeed-sdk refresh-token"
+  }
+}
+```
+
+Then run:
+
+```bash
+npm run lightspeed-setup
+npm run lightspeed-status
+```
+
+### Configuration
+
+Create a `.env` file in your project root (where you'll run the CLI commands) with your Lightspeed credentials:
+
+```bash
+# Required OAuth credentials
+LIGHTSPEED_CLIENT_ID=your_client_id
+LIGHTSPEED_CLIENT_SECRET=your_client_secret
+LIGHTSPEED_ACCOUNT_ID=your_account_id
+LIGHTSPEED_REDIRECT_URL=your_redirect_url
+
+# Optional: Storage configuration
+LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
+LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key
+
+# Optional: Database connections
+POSTGRES_URL=postgres://user:pass@host:5432/db
+MONGO_URL=mongodb://localhost:27017/lightspeed
+
+# Optional: Email notifications
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+ALERT_EMAIL=admin@yourcompany.com
+```
+
+Generate an encryption key for secure token storage:
+
+```bash
+# Run this command to generate a secure encryption key
+node -e "console.log('LIGHTSPEED_ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Add the generated key to your `.env` file.
+
+> **Note**: The CLI will read configuration from the `.env` file in your current working directory, making setup much easier by reducing the number of prompts.
+
 ## Quick Start
 
 ### Modern CLI-First Approach (Recommended)
@@ -386,11 +483,23 @@ npm install lightspeed-retail-sdk
 The easiest way to get started is using the interactive CLI to handle authentication:
 
 ```bash
-# 1. Install the SDK
+# 1. Install the SDK globally
+npm install -g lightspeed-retail-sdk
+
+# 2. Authenticate using CLI (one-time setup)
+lightspeed-sdk login
+
+# 3. Use the SDK in your code
+```
+
+#### Alternative: Local Installation
+
+```bash
+# 1. Install the SDK locally
 npm install lightspeed-retail-sdk
 
 # 2. Authenticate using CLI (one-time setup)
-npm run cli login
+npx lightspeed-sdk login
 
 # 3. Use the SDK in your code
 ```
@@ -470,7 +579,7 @@ You can now store your tokens **encrypted at rest** using the built-in `Encrypte
 **Generate a key** (if you haven't already):
 
 ```bash
-npm run generate-key
+node -e "console.log('LIGHTSPEED_ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 Add the generated key to your `.env` file:
@@ -523,7 +632,7 @@ Keep your encryption key secure and never commit it to version control!
 #### Option 1: Use the CLI (Recommended)
 
 ```bash
-npm run cli setup-db
+lightspeed-sdk setup-db
 ```
 
 The CLI will guide you through creating the required tables/collections for your database.

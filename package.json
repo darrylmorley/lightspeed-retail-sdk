@@ -11,6 +11,9 @@
       "default": "./dist/index.mjs"
     }
   },
+  "bin": {
+    "lightspeed-sdk": "dist/src/bin/cli.js"
+  },
   "scripts": {
     "test": "node tests/test.js",
     "test:cjs": "node tests/test-cjs.cjs",
@@ -28,7 +31,7 @@
     "build:storage": "swc src/storage/TokenStorage.mjs -o dist/src/storage/TokenStorage.cjs",
     "build:main": "swc index.mjs -o dist/index.cjs",
     "fix-paths": "find dist -name '*.cjs' -exec sed -i '' 's/\\.mjs/.cjs/g' {} +",
-    "prebuild": "mkdir -p dist/src/core dist/src/storage",
+    "prebuild": "mkdir -p dist/src/core dist/src/storage dist/src/bin",
     "clean": "rm -rf dist",
     "generate-key": "node scripts/generate-key.js",
     "prepublishOnly": "npm run build"
@@ -36,7 +39,8 @@
   "files": [
     "dist/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/"
   ],
   "author": "https://github.com/darrylmorley",
   "license": "MIT",
