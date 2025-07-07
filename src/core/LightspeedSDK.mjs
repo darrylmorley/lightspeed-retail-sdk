@@ -241,6 +241,19 @@ export class LightspeedSDKCore {
       this.lastResponse = res;
 
       if (options.method === "GET") {
+        // Handle successful response with no data or empty data
+        if (!res.data || Object.keys(res.data).length === 0) {
+          console.log(
+            `✅ API returned empty response (no data available) for ${options.url}`
+          );
+          return {
+            data: {},
+            next: null,
+            previous: null,
+          };
+        }
+
+        // Handle successful response with data
         return {
           data: res.data,
           next: res.data["@attributes"]?.next,
@@ -281,15 +294,22 @@ export class LightspeedSDKCore {
         const errorData = err.response?.data;
         const errorStatus = err.response?.status;
 
-        this.handleError(errorMsg);
-        if (errorData) {
-          this.handleError(`Failed data: ${JSON.stringify(errorData)}`);
-        }
-        if (errorStatus) {
+        // Only log as error if it's actually an error status code
+        if (errorStatus && errorStatus >= 400) {
+          this.handleError(errorMsg);
+          if (errorData) {
+            this.handleError(`Failed data: ${JSON.stringify(errorData)}`);
+          }
           this.handleError(`Status code: ${errorStatus}`);
-        }
-        if (options.url) {
-          this.handleError(`Request URL: ${options.url}`);
+          if (options.url) {
+            this.handleError(`Request URL: ${options.url}`);
+          }
+        } else {
+          // Log as warning for non-error status codes
+          console.warn(`Unexpected response: ${errorMsg}`);
+          if (errorStatus) {
+            console.warn(`Status code: ${errorStatus}`);
+          }
         }
 
         throw err;
@@ -304,39 +324,46 @@ export class LightspeedSDKCore {
       while (options.url) {
         const { data } = await this.executeApiRequest(options);
 
-        // Handle empty or malformed responses
-        if (!data || typeof data !== "object") {
-          console.warn("Empty or invalid data response, stopping pagination");
+        // Handle successful empty responses
+        if (!data || Object.keys(data).length === 0) {
+          console.log(
+            `✅ No data available for ${options.url} - returning empty array`
+          );
           break;
         }
 
         // Check if we have @attributes
         const attributes = data["@attributes"];
-        if (!attributes) {
-          console.warn("No @attributes found in response, stopping pagination");
-          break;
-        }
-
-        const next = attributes.next;
+        const next = attributes?.next;
         const dataKeys = Object.keys(data).filter(
           (key) => key !== "@attributes"
         );
 
         if (dataKeys.length === 0) {
-          console.warn("No data keys found in response, stopping pagination");
+          console.log(
+            `✅ No data keys found in response for ${options.url} - returning empty array`
+          );
           break;
         }
 
         const selectDataArray = dataKeys[0];
         const selectedData = data[selectDataArray];
 
-        // Handle case where selectedData is undefined or not an array
+        // Handle case where selectedData is undefined, null, or empty array
         if (!selectedData) {
-          console.warn("No data found for key:", selectDataArray);
+          console.log(
+            `✅ No data found for key: ${selectDataArray} - this is normal when no records match the criteria`
+          );
           break;
         }
 
         if (Array.isArray(selectedData)) {
+          if (selectedData.length === 0) {
+            console.log(
+              `✅ Empty array returned for ${selectDataArray} - no records match the criteria`
+            );
+            break;
+          }
           allData = allData.concat(selectedData);
         } else {
           // Single item, wrap in array
