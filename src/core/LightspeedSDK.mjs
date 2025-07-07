@@ -300,9 +300,6 @@ export class LightspeedSDKCore {
       delete options.params; // Don't let axios try to re-encode
     }
 
-    // Always log the final URL for the API request (for debugging)
-    console.log(`[LightspeedSDK] API Request URL: ${options.url}`);
-
     try {
       const res = await axios(options);
       this.lastResponse = res;
