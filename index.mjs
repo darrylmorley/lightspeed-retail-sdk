@@ -17,18 +17,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
    * @returns {Promise<Object>} Account info object from Lightspeed API
    */
   async getAccount(relations) {
-    let url = `${this.baseUrl}/${this.accountID}.json`;
-    if (relations) {
-      const relStr = Array.isArray(relations) ? relations.join(",") : relations;
-      url += `?load_relations=${relStr}`;
-    }
     const options = {
-      url,
+      url: `${this.baseUrl}/${this.accountID}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
     try {
       const response = await this.executeApiRequest(options);
-      // The API may return { data: { Account: {...} } } or just { Account: {...} }
       if (response?.data?.Account) return response.data;
       if (response?.Account) return response;
       return response;
@@ -40,14 +35,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get customer by ID
   async getCustomer(id, relations) {
+    if (!id) return this.handleError("You need to provide a customerID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Customer/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a customerID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -65,37 +59,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -163,14 +129,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get item by ID
   async getItem(id, relations) {
+    if (!id) return this.handleError("You need to provide a itemID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a itemID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -183,16 +148,16 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get multiple items by ID
   async getMultipleItems(items, relations) {
+    if (!items) return this.handleError("You need to provide itemID's");
+
+    const params = { itemID: `IN,${items}` };
+    if (relations) params.load_relations = relations;
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
+      params,
     };
-
-    if (!items) return this.handleError("You need to provide itemID's");
-
-    if (items) options.url = options.url + `?itemID=IN,${items}`;
-
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -210,43 +175,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations, limit) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      const limit = arguments[1];
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        // Handle timestamp filtering - expect ISO string, convert to Lightspeed format
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -301,12 +232,16 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get all items by vendor
   async getVendorItems(vendorID, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Item.json?defaultVendorID=${vendorID}`,
-      method: "GET",
-    };
+    if (!vendorID) return this.handleError("You need to provide a vendorID");
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const params = { defaultVendorID: vendorID };
+    if (relations) params.load_relations = relations;
+
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -319,14 +254,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get Matrix Item by ID
   async getMatrixItem(id, relations) {
+    if (!id) return this.handleError("You need to provide a itemID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a itemID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -344,37 +278,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -408,14 +314,14 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Update Matrix Item by ID
   async putMatrixItem(id, data) {
+    if (!id) return this.handleError("You need to provide a itemID");
+    if (!data) return this.handleError("You need to provide data");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix/${id}.json`,
       method: "PUT",
       data,
     };
-
-    if (!id) return this.handleError("You need to provide a itemID");
-    if (!data) return this.handleError("You need to provide data");
 
     try {
       const response = await this.executeApiRequest(options);
@@ -427,13 +333,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Create a new Matrix Item
   async postMatrixItem(data) {
+    if (!data) return this.handleError("You need to provide data");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix.json`,
       method: "POST",
       data,
     };
-
-    if (!data) return this.handleError("You need to provide data");
 
     try {
       const response = await this.executeApiRequest(options);
@@ -445,14 +351,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get category by ID
   async getCategory(id, relations) {
+    if (!id) return this.handleError("You need to provide a categoryID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Category/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a categoryID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -470,37 +375,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -570,14 +447,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get Manufacturer by ID
   async getManufacturer(id, relations) {
+    if (!id) return this.handleError("You need to provide a manufacturerID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Manufacturer/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a manufacturerID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -595,37 +471,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -696,14 +544,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get order by ID
   async getOrder(id, relations) {
+    if (!id) return this.handleError("You need to provide a orderID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Order/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a orderID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -721,37 +568,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -785,14 +604,14 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get all orders by vendor
   async getOrdersByVendorID(id, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor"]&vendorID=${id}`,
-      method: "GET",
-    };
-
     if (!id) return this.handleError("You need to provide a vendorID");
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const params = { vendorID: id, load_relations: relations || ["Vendor"] };
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Order.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -805,14 +624,18 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get all open orders by vendor
   async getOpenOrdersByVendorID(id, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Order.json?load_relations=["Vendor", "OrderLines"]&vendorID=${id}&complete=false`,
-      method: "GET",
-    };
-
     if (!id) return this.handleError("You need to provide a vendorID");
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const params = {
+      vendorID: id,
+      complete: false,
+      load_relations: relations || ["Vendor", "OrderLines"],
+    };
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Order.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -825,14 +648,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get vendor by ID
   async getVendor(id, relations) {
+    if (!id) return this.handleError("You need to provide a vendorID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Vendor/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a vendorID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -850,37 +672,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -950,14 +744,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get sale by ID
   async getSale(id, relations) {
+    if (!id) return this.handleError("You need to provide a saleID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Sale/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide a saleID");
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.getAllData(options);
@@ -975,37 +768,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
+    // Centralized param handling: pass params (object or string) to options, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      options.params = params;
     }
 
     try {
@@ -1038,12 +803,16 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   async getMultipleSales(saleIDs, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/Sale.json?saleID=IN,${saleIDs}`,
-      method: "GET",
-    };
+    if (!saleIDs) return this.handleError("You need to provide saleIDs");
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const params = { saleID: `IN,${saleIDs}` };
+    if (relations) params.load_relations = relations;
+
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/Sale.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -1093,12 +862,16 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get sale lines by itemID
   async getSaleLinesByItem(itemID, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=${itemID}`,
-      method: "GET",
-    };
+    if (!itemID) return this.handleError("You need to provide an itemID");
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const params = { itemID };
+    if (relations) params.load_relations = relations;
+
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -1116,23 +889,24 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     endDate = undefined,
     relations
   ) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?itemID=IN,[${ids}]`,
-      method: "GET",
-    };
-
     if (!ids) return this.handleError("You need to provide itemIDs");
     if (startDate && !endDate)
       return this.handleError("You need to provide an end date");
     if (endDate && !startDate)
       return this.handleError("You need to provide a start date");
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const params = { itemID: `IN,[${ids}]` };
+    if (relations) params.load_relations = relations;
+    if (startDate && endDate) {
+      params.timeStamp = `><,${startDate},${endDate}`;
+      params.sort = "timeStamp";
+    }
 
-    if (startDate && endDate)
-      options.url =
-        options.url +
-        `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -1150,23 +924,24 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     endDate = undefined,
     relations
   ) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/SaleLine.json?load_relations=${
-        relations ? relations : `["Item"]`
-      }&Item.defaultVendorID=${id}`,
-      method: "GET",
-    };
-
     if (!id) return this.handleError("You need to provide a vendorID");
     if (startDate && !endDate)
       return this.handleError("You need to provide an end date");
     if (endDate && !startDate)
       return this.handleError("You need to provide a start date");
 
-    if (startDate && endDate)
-      options.url =
-        options.url +
-        `&timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`;
+    const params = { "Item.defaultVendorID": id };
+    params.load_relations = relations || ["Item"];
+    if (startDate && endDate) {
+      params.timeStamp = `><,${startDate},${endDate}`;
+      params.sort = "timeStamp";
+    }
+
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/SaleLine.json`,
+      method: "GET",
+      params,
+    };
 
     try {
       const response = await this.getAllData(options);
@@ -1180,41 +955,18 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   // Fetch all Credit Accounts
   async getGiftCards(params = {}) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json?giftCard=true`,
+      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json`,
       method: "GET",
+      params: { giftCard: true },
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...options.params, ...params };
+      } else if (typeof params === "string") {
+        options.params = { ...options.params, load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `&${queryString}`;
     }
 
     try {
@@ -1248,14 +1000,17 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Fetch a Credit Account by ID
   async getGiftCard(id, relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json?giftCard=true&code=${id}`,
-      method: "GET",
-    };
-
     if (!id) return this.handleError("You need to provide a gift card code");
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const options = {
+      url: `${this.baseUrl}/${this.accountID}/CreditAccount.json`,
+      method: "GET",
+      params: { giftCard: true, code: id },
+    };
+
+    if (relations) {
+      options.params.load_relations = relations;
+    }
 
     try {
       const response = await this.getAllData(options);
@@ -1269,41 +1024,18 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   // Get special orders
   async getSpecialOrders(params = {}) {
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/SpecialOrder.json?completed=0`,
+      url: `${this.baseUrl}/${this.accountID}/SpecialOrder.json`,
       method: "GET",
+      params: { completed: 0 },
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...options.params, ...params };
+      } else if (typeof params === "string") {
+        options.params = { ...options.params, load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `&${queryString}`;
     }
 
     try {
@@ -1341,37 +1073,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1479,37 +1187,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1543,13 +1227,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Get employee by ID
   async getEmployee(id, relations) {
+    if (!id) return this.handleError("You need to provide an employeeID");
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Employee/${id}.json`,
       method: "GET",
+      params: relations ? { load_relations: relations } : undefined,
     };
-
-    if (!id) return this.handleError("You need to provide an employeeID");
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
 
     try {
       const response = await this.executeApiRequest(options);
@@ -1567,37 +1251,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1636,37 +1296,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1705,37 +1341,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1774,37 +1386,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1843,37 +1431,13 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    const searchParams = new URLSearchParams();
-
-    // Handle legacy parameters (relations) for backward compatibility
-    if (typeof params === "string") {
-      // Legacy: first parameter is relations
-      const relations = params;
-      if (relations) {
-        searchParams.append("load_relations", relations);
+    // Centralized param handling: merge params (object or string) into options.params, let SDK core handle query string
+    if (params !== undefined && params !== null) {
+      if (typeof params === "object" && !Array.isArray(params)) {
+        options.params = { ...params };
+      } else if (typeof params === "string") {
+        options.params = { load_relations: params };
       }
-    } else if (typeof params === "object" && params !== null) {
-      // New object-based parameters
-      const { relations, limit, timeStamp, sort } = params;
-
-      if (relations) {
-        searchParams.append("load_relations", relations);
-      }
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `?${queryString}`;
     }
 
     try {
@@ -1908,13 +1472,11 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   // Search items
   async searchItems(searchTerm, relations) {
     const options = {
-      url: `${this.baseUrl}/${
-        this.accountID
-      }/Item.json?description=~,${encodeURIComponent(searchTerm)}`,
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
+      params: { description: `~,${searchTerm}` },
     };
-
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    if (relations) options.params.load_relations = relations;
 
     try {
       const response = await this.getAllData(options);
@@ -1926,13 +1488,17 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   // Search customers
   async searchCustomers(searchTerm, relations) {
-    const encodedTerm = encodeURIComponent(searchTerm);
+    const orParam = [
+      `firstName=~,${searchTerm}`,
+      `lastName=~,${searchTerm}`,
+      `email=~,${searchTerm}`,
+    ].join("||");
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Customer.json?or=firstName=~,${encodedTerm}||lastName=~,${encodedTerm}||email=~,${encodedTerm}`,
+      url: `${this.baseUrl}/${this.accountID}/Customer.json`,
       method: "GET",
+      params: { or: orParam },
     };
-
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    if (relations) options.params.load_relations = relations;
 
     try {
       const response = await this.getAllData(options);
@@ -1962,33 +1528,19 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     }
 
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Sale.json?timeStamp=%3E%3C%2C${startDate}%2C${endDate}&sort=timeStamp`,
+      url: `${this.baseUrl}/${this.accountID}/Sale.json`,
       method: "GET",
+      params: {
+        timeStamp: `><,${startDate},${endDate}`,
+        sort:
+          typeof params === "object" && params?.sort
+            ? params.sort
+            : "timeStamp",
+      },
     };
-
-    const searchParams = new URLSearchParams();
-
-    // Handle additional parameters for new object-based approach
-    if (typeof params === "object" && params !== null) {
-      const { limit, sort } = params;
-
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (sort && sort !== "timeStamp") {
-        // Replace the default sort with the custom one
-        options.url = options.url.replace("&sort=timeStamp", `&sort=${sort}`);
-      }
-    }
-
-    if (relations) {
-      searchParams.append("load_relations", relations);
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `&${queryString}`;
-    }
+    if (relations) options.params.load_relations = relations;
+    if (typeof params === "object" && params?.limit)
+      options.params.limit = Math.min(params.limit, 100);
 
     try {
       const isLimitedRequest = typeof params === "object" && params?.limit;
@@ -2036,36 +1588,17 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     }
 
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Item.json?categoryID=${categoryId}`,
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
+      params: { categoryID: categoryId },
     };
-
-    const searchParams = new URLSearchParams();
-
-    // Handle additional parameters for new object-based approach
-    if (typeof params === "object" && params !== null) {
-      const { limit, timeStamp, sort } = params;
-
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    if (relations) {
-      searchParams.append("load_relations", relations);
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `&${queryString}`;
-    }
+    if (relations) options.params.load_relations = relations;
+    if (typeof params === "object" && params?.limit)
+      options.params.limit = Math.min(params.limit, 100);
+    if (typeof params === "object" && params?.timeStamp)
+      options.params.timeStamp = `>${params.timeStamp}`;
+    if (typeof params === "object" && params?.sort)
+      options.params.sort = params.sort;
 
     try {
       const isLimitedRequest = typeof params === "object" && params?.limit;
@@ -2110,36 +1643,17 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     }
 
     const options = {
-      url: `${this.baseUrl}/${this.accountID}/Item.json?qoh=<,${threshold}`,
+      url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
+      params: { qoh: `<,${threshold}` },
     };
-
-    const searchParams = new URLSearchParams();
-
-    // Handle additional parameters for new object-based approach
-    if (typeof params === "object" && params !== null) {
-      const { limit, timeStamp, sort } = params;
-
-      if (limit) {
-        searchParams.append("limit", Math.min(limit, 100));
-      }
-      if (timeStamp) {
-        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
-        searchParams.append("timeStamp", encodedTimestamp);
-      }
-      if (sort) {
-        searchParams.append("sort", sort);
-      }
-    }
-
-    if (relations) {
-      searchParams.append("load_relations", relations);
-    }
-
-    const queryString = searchParams.toString();
-    if (queryString) {
-      options.url += `&${queryString}`;
-    }
+    if (relations) options.params.load_relations = relations;
+    if (typeof params === "object" && params?.limit)
+      options.params.limit = Math.min(params.limit, 100);
+    if (typeof params === "object" && params?.timeStamp)
+      options.params.timeStamp = `>${params.timeStamp}`;
+    if (typeof params === "object" && params?.sort)
+      options.params.sort = params.sort;
 
     try {
       const isLimitedRequest = typeof params === "object" && params?.limit;

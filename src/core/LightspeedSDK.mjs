@@ -1,3 +1,60 @@
+/**
+ * Centralized query param builder for all API endpoints.
+ * Accepts params as object, string, or array. Handles relations/load_relations, custom params, and avoids double-encoding.
+ * @param {object|string|array} params
+ * @returns {string} query string (no leading '?')
+ */
+export function buildQueryParams(params) {
+  if (!params) {
+    return "";
+  }
+  if (typeof params === "string") {
+    const str = params.replace(/^\?/, "");
+    if (str.startsWith("[")) {
+      // If string starts with [, treat as load_relations
+      return `load_relations=${str}`;
+    }
+    // If it looks like a query string (contains =), return as-is
+    if (str.includes("=")) {
+      return str;
+    }
+    // Otherwise, return as-is (legacy fallback)
+    return str;
+  }
+  if (Array.isArray(params)) {
+    // Always treat as load_relations JSON array, NOT encoded
+    const relString = JSON.stringify(params);
+    return "load_relations=" + relString;
+  }
+  const qp = [];
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (key === "relations" || key === "load_relations") {
+      if (Array.isArray(value)) {
+        const relString = JSON.stringify(value);
+        qp.push("load_relations=" + relString);
+      } else {
+        qp.push("load_relations=" + value);
+      }
+    } else if (key === "or") {
+      // Pass or param as-is, NOT encoded
+      qp.push(`or=${value}`);
+    } else if (key === "timeStamp") {
+      // Encode as timeStamp=>,{timestamp}, NOT encoded
+      qp.push(`timeStamp=>,${value}`);
+    } else if (typeof value === "object" && !Array.isArray(value)) {
+      for (const [subkey, subval] of Object.entries(value)) {
+        if (subval !== undefined && subval !== null) {
+          qp.push(`${key}[${subkey}]=${subval}`);
+        }
+      }
+    } else {
+      qp.push(`${key}=${value}`);
+    }
+  }
+  const result = qp.join("&");
+  return result;
+}
 import axios from "axios";
 
 const operationUnits = { GET: 1, POST: 10, PUT: 10 };
@@ -231,6 +288,20 @@ export class LightspeedSDKCore {
       "Content-Type": "application/json",
       ...options.headers,
     };
+
+    // Centralized query param handling
+    if (options.params) {
+      const queryString = buildQueryParams(options.params);
+      if (queryString) {
+        // Remove any trailing ? or & from url
+        options.url = options.url.replace(/[?&]+$/, "");
+        options.url += (options.url.includes("?") ? "&" : "?") + queryString;
+      }
+      delete options.params; // Don't let axios try to re-encode
+    }
+
+    // Always log the final URL for the API request (for debugging)
+    console.log(`[LightspeedSDK] API Request URL: ${options.url}`);
 
     try {
       const res = await axios(options);
