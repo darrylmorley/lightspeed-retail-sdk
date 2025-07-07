@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Set your test Postgres connection string here or via env
-const PG_CONN = process.env.POSTGRES_URL;
+const PG_CONN = process.env.LIGHTSPEED_POSTGRES_URL;
 const TABLE_NAME = "oauth_tokens";
 
 async function setupPostgresTable(client, tableName) {

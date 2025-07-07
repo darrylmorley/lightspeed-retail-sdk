@@ -271,8 +271,8 @@ LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
 LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key
 
 # Database connections (for database storage)
-POSTGRES_URL=postgres://user:pass@host:5432/db
-MONGO_URL=mongodb://localhost:27017/lightspeed
+LIGHTSPEED_POSTGRES_URL=postgres://user:pass@host:5432/db
+LIGHTSPEED_MONGO_URL=mongodb://localhost:27017/lightspeed
 
 # OAuth credentials
 LIGHTSPEED_CLIENT_ID=your_client_id
@@ -453,8 +453,8 @@ LIGHTSPEED_TOKEN_FILE=./tokens/encrypted-tokens.json
 LIGHTSPEED_ENCRYPTION_KEY=your_64_char_hex_key
 
 # Optional: Database connections
-POSTGRES_URL=postgres://user:pass@host:5432/db
-MONGO_URL=mongodb://localhost:27017/lightspeed
+LIGHTSPEED_POSTGRES_URL=postgres://user:pass@host:5432/db
+LIGHTSPEED_MONGO_URL=mongodb://localhost:27017/lightspeed
 
 # Optional: Email notifications
 SMTP_HOST=smtp.gmail.com

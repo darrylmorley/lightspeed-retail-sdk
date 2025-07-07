@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Set your test MongoDB connection string here or via env
-const MONGO_URL = process.env.MONGO_URL;
+const MONGO_URL = process.env.LIGHTSPEED_MONGO_URL;
 const COLLECTION_NAME = "oauth_tokens";
 
 async function runTests() {
