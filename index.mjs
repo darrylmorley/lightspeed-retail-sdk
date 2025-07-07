@@ -13,14 +13,14 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
   /**
    * Fetches account info for the current accountID.
-   * @param {string[]} [relations] - Optional relations to load (array or comma-separated string)
    * @returns {Promise<Object>} Account info object from Lightspeed API
    */
-  async getAccount(relations) {
+  async getAccount() {
+    console.log("Account ID", this.accountID);
     const options = {
       url: `${this.baseUrl}/${this.accountID}.json`,
       method: "GET",
-      params: relations ? { load_relations: relations } : undefined,
+      params: undefined,
     };
     try {
       const response = await this.executeApiRequest(options);
@@ -1162,24 +1162,6 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     }
   }
 
-  // Shop/Account information
-  async getAccount(relations) {
-    const options = {
-      url: `${this.baseUrl}/${this.accountID}.json`,
-      method: "GET",
-    };
-
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
-
-    try {
-      const response = await this.executeApiRequest(options);
-      return response;
-    } catch (error) {
-      this.handleError("GET ACCOUNT ERROR", error, false);
-      return [];
-    }
-  }
-
   // Get all employees
   async getEmployees(params = {}) {
     const options = {
@@ -1707,7 +1689,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Helper method for content type detection (for image uploads)
-  getContentType(filename) {
+  #getContentType(filename) {
     const ext = filename.toLowerCase().split(".").pop();
     const contentTypes = {
       jpg: "image/jpeg",
