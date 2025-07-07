@@ -121,6 +121,11 @@ The CLI provides an interactive way to:
 # Start OAuth authentication flow
 lightspeed-retail-sdk login
 
+# Start OAuth authentication with specific browser
+lightspeed-retail-sdk login --browser firefox
+lightspeed-retail-sdk login --browser "google chrome"
+lightspeed-retail-sdk login --browser safari
+
 # Check current token status
 lightspeed-retail-sdk token-status
 
@@ -170,10 +175,29 @@ The CLI automatically prompts you to choose your preferred storage backend:
 lightspeed-retail-sdk login
 ```
 
-1. Prompts for your Lightspeed credentials
-2. Opens browser for OAuth authorization
-3. Automatically exchanges code for tokens
-4. Stores tokens in your chosen backend
+The login process:
+
+1. Prompts for your Lightspeed credentials (if not in environment)
+2. Optionally lets you choose a specific browser
+3. Opens browser for OAuth authorization
+4. Automatically exchanges code for tokens
+5. Stores tokens in your chosen backend
+
+**Note**: If no scopes are specified via environment variables or user input, the default scope `employee:all` will be used.
+
+**Browser Options:**
+
+```bash
+# Use default browser
+lightspeed-retail-sdk login
+
+# Specify browser via command line
+lightspeed-retail-sdk login --browser firefox
+lightspeed-retail-sdk login --browser "google chrome"
+
+# Interactive browser selection (when no --browser flag is used)
+# The CLI will ask if you want to choose a specific browser
+```
 
 #### Token Management
 
@@ -279,6 +303,9 @@ LIGHTSPEED_CLIENT_ID=your_client_id
 LIGHTSPEED_CLIENT_SECRET=your_client_secret
 LIGHTSPEED_ACCOUNT_ID=your_account_id
 LIGHTSPEED_REDIRECT_URL=your_lightspeed_redirect_url
+
+# Optional: OAuth scopes (defaults to "employee:all" if not specified)
+LIGHTSPEED_SCOPES=employee:all inventory:all
 ```
 
 ### CLI Examples
@@ -292,8 +319,8 @@ node -e "console.log('LIGHTSPEED_ENCRYPTION_KEY=' + require('crypto').randomByte
 # 2. Set up database storage
 lightspeed-retail-sdk setup-db
 
-# 3. Authenticate and store tokens
-lightspeed-retail-sdk login
+# 3. Authenticate and store tokens (with browser choice)
+lightspeed-retail-sdk login --browser firefox
 
 # 4. Verify setup
 lightspeed-retail-sdk whoami
@@ -463,6 +490,9 @@ SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 ALERT_EMAIL=admin@yourcompany.com
+
+# Optional: OAuth scopes (defaults to "employee:all")
+LIGHTSPEED_SCOPES=employee:all
 ```
 
 Generate an encryption key for secure token storage:

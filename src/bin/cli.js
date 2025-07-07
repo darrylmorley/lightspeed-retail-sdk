@@ -57,7 +57,11 @@ program
 program
   .command("login")
   .description("Authenticate and store new tokens")
-  .action(async () => {
+  .option(
+    "-b, --browser <browser>",
+    "Specify browser to use (chrome, firefox, safari, edge, etc.)"
+  )
+  .action(async (options) => {
     let storageBackend = null;
     try {
       // 1. Gather clientID, clientSecret, etc. from env or prompt
@@ -76,8 +80,9 @@ program
       const scopes =
         process.env.LIGHTSPEED_SCOPES ||
         (await prompt(
-          "Enter scopes (space-separated, e.g. employee:all inventory:all): "
-        ));
+          "Enter scopes (space-separated, default: employee:all): "
+        )) ||
+        "employee:all";
 
       // 2. Build OAuth URL
       const authUrl = `https://cloud.lightspeedapp.com/auth/oauth/authorize?response_type=code&client_id=${encodeURIComponent(
@@ -87,7 +92,70 @@ program
       )}&scope=${encodeURIComponent(scopes)}`;
 
       console.log("\nOpening browser for authentication...");
-      await open(authUrl);
+
+      // Open browser with optional browser specification
+      const openOptions = {};
+      if (options.browser) {
+        openOptions.app = { name: options.browser };
+        console.log(`Using browser: ${options.browser}`);
+      } else {
+        // Ask user if they want to choose a specific browser
+        const { chooseBrowser } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "chooseBrowser",
+            message: "Do you want to choose a specific browser?",
+            default: false,
+          },
+        ]);
+
+        if (chooseBrowser) {
+          const { browserChoice } = await inquirer.prompt([
+            {
+              type: "list",
+              name: "browserChoice",
+              message: "Select browser:",
+              choices: [
+                { name: "Default browser", value: null },
+                { name: "Google Chrome", value: "google chrome" },
+                { name: "Firefox", value: "firefox" },
+                { name: "Safari", value: "safari" },
+                { name: "Microsoft Edge", value: "microsoft edge" },
+                { name: "Brave", value: "brave" },
+                { name: "Opera", value: "opera" },
+                { name: "Custom browser name", value: "custom" },
+              ],
+            },
+          ]);
+
+          if (browserChoice === "custom") {
+            const { customBrowser } = await inquirer.prompt([
+              {
+                type: "input",
+                name: "customBrowser",
+                message: "Enter browser name:",
+                validate: (input) =>
+                  input.trim() !== "" || "Browser name cannot be empty",
+              },
+            ]);
+            openOptions.app = { name: customBrowser };
+            console.log(`Using browser: ${customBrowser}`);
+          } else if (browserChoice) {
+            openOptions.app = { name: browserChoice };
+            console.log(`Using browser: ${browserChoice}`);
+          }
+        }
+      }
+
+      try {
+        await open(authUrl, openOptions);
+      } catch (err) {
+        console.log(
+          `\n⚠️  Could not open browser automatically: ${err.message}`
+        );
+        console.log(`\nPlease manually open this URL in your browser:`);
+        console.log(authUrl);
+      }
 
       // 3. Prompt for code
       const code = await prompt(
