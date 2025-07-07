@@ -59,17 +59,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all customers
-  async getCustomers(relations) {
+  async getCustomers(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Customer.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET CUSTOMERS ERROR", error);
       return [];
@@ -288,17 +339,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all Matrix Items
-  async getMatrixItems(relations) {
+  async getMatrixItems(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemMatrix.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET MATRIX ITEMS ERROR", error);
       return [];
@@ -363,17 +465,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all categories
-  async getCategories(relations) {
+  async getCategories(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Category.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET CATEGORIES ERROR", error);
       return [];
@@ -437,17 +590,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all manufacturers
-  async getManufacturers(relations) {
+  async getManufacturers(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Manufacturer.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET MANUFACTURERS ERROR", error);
       return [];
@@ -512,17 +716,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all orders
-  async getOrders(relations) {
+  async getOrders(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Order.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET ORDERS ERROR", error);
       return [];
@@ -590,17 +845,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all vendors
-  async getVendors(relations) {
+  async getVendors(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Vendor.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET VENDORS ERROR", error);
       return [];
@@ -664,17 +970,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all sales
-  async getSales(relations) {
+  async getSales(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Sale.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET SALES ERROR", error);
       return [];
@@ -822,17 +1179,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Fetch all Credit Accounts
-  async getGiftCards(relations) {
+  async getGiftCards(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/CreditAccount.json?giftCard=true`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `&${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET CREDIT ACCOUNTS ERROR", error);
       return [];
@@ -860,34 +1268,136 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get special orders
-  async getSpecialOrders(relations) {
+  async getSpecialOrders(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/SpecialOrder.json?completed=0`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `&${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET SPECIAL ORDER ERROR", error);
       return [];
     }
   }
 
-  async getImages(relations) {
+  async getImages(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Image.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET IMAGES ERROR", error);
       return [];
@@ -964,17 +1474,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all employees
-  async getEmployees(relations) {
+  async getEmployees(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Employee.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET EMPLOYEES ERROR", error);
       return [];
@@ -1001,17 +1562,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Customer Types
-  async getCustomerTypes(relations) {
+  async getCustomerTypes(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/CustomerType.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET CUSTOMER TYPES ERROR", error);
       return [];
@@ -1019,17 +1631,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get all registers
-  async getRegisters(relations) {
+  async getRegisters(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Register.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET REGISTERS ERROR", error);
       return [];
@@ -1037,17 +1700,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get Payment Types
-  async getPaymentTypes(relations) {
+  async getPaymentTypes(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/PaymentType.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET PAYMENT TYPES ERROR", error);
       return [];
@@ -1055,17 +1769,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get Tax Classes
-  async getTaxClasses(relations) {
+  async getTaxClasses(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/TaxClass.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET TAX CLASSES ERROR", error);
       return [];
@@ -1073,17 +1838,68 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get Item Attributes
-  async getItemAttributes(relations) {
+  async getItemAttributes(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/ItemAttribute.json`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `?load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle legacy parameters (relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `?${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return response;
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET ITEM ATTRIBUTES ERROR", error);
       return [];
@@ -1128,7 +1944,20 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get sales by date range
-  async getSalesByDateRange(startDate, endDate, relations) {
+  async getSalesByDateRange(params = {}) {
+    let startDate, endDate, relations;
+
+    // Handle legacy parameters (startDate, endDate, relations) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is startDate
+      startDate = params;
+      endDate = arguments[1];
+      relations = arguments[2];
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      ({ startDate, endDate, relations } = params);
+    }
+
     if (!startDate || !endDate) {
       return this.handleError("You need to provide both start and end dates");
     }
@@ -1138,11 +1967,51 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle additional parameters for new object-based approach
+    if (typeof params === "object" && params !== null) {
+      const { limit, sort } = params;
+
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (sort && sort !== "timeStamp") {
+        // Replace the default sort with the custom one
+        options.url = options.url.replace("&sort=timeStamp", `&sort=${sort}`);
+      }
+    }
+
+    if (relations) {
+      searchParams.append("load_relations", relations);
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `&${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest = typeof params === "object" && params?.limit;
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET SALES BY DATE RANGE ERROR", error);
       return [];
@@ -1150,19 +2019,76 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get items by category
-  async getItemsByCategory(categoryId, relations) {
+  async getItemsByCategory(params = {}) {
+    let categoryId, relations;
+
+    // Handle legacy parameters (categoryId, relations) for backward compatibility
+    if (typeof params === "string" || typeof params === "number") {
+      // Legacy: first parameter is categoryId
+      categoryId = params;
+      relations = arguments[1];
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      ({ categoryId, relations } = params);
+    }
+
+    if (!categoryId) {
+      return this.handleError("You need to provide a categoryID");
+    }
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json?categoryID=${categoryId}`,
       method: "GET",
     };
 
-    if (!categoryId)
-      return this.handleError("You need to provide a categoryID");
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle additional parameters for new object-based approach
+    if (typeof params === "object" && params !== null) {
+      const { limit, timeStamp, sort } = params;
+
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    if (relations) {
+      searchParams.append("load_relations", relations);
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `&${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest = typeof params === "object" && params?.limit;
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET ITEMS BY CATEGORY ERROR", error);
       return [];
@@ -1170,17 +2096,73 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
   }
 
   // Get low stock items
-  async getItemsWithLowStock(threshold = 5, relations) {
+  async getItemsWithLowStock(params = {}) {
+    let threshold = 5,
+      relations;
+
+    // Handle legacy parameters (threshold, relations) for backward compatibility
+    if (typeof params === "number") {
+      // Legacy: first parameter is threshold
+      threshold = params;
+      relations = arguments[1];
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      ({ threshold = 5, relations } = params);
+    }
+
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json?qoh=<,${threshold}`,
       method: "GET",
     };
 
-    if (relations) options.url = options.url + `&load_relations=${relations}`;
+    const searchParams = new URLSearchParams();
+
+    // Handle additional parameters for new object-based approach
+    if (typeof params === "object" && params !== null) {
+      const { limit, timeStamp, sort } = params;
+
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
+    }
+
+    if (relations) {
+      searchParams.append("load_relations", relations);
+    }
+
+    const queryString = searchParams.toString();
+    if (queryString) {
+      options.url += `&${queryString}`;
+    }
 
     try {
-      const response = await this.getAllData(options);
-      return Array.isArray(response) ? response : [];
+      const isLimitedRequest = typeof params === "object" && params?.limit;
+
+      if (isLimitedRequest) {
+        // Single page request
+        const response = await this.executeApiRequest(options);
+        if (response?.data) {
+          const data = response.data;
+          if (typeof data === "object" && data !== null) {
+            const dataKey = Object.keys(data).find(
+              (key) => key !== "@attributes"
+            );
+            return dataKey && Array.isArray(data[dataKey]) ? data[dataKey] : [];
+          }
+        }
+        return [];
+      } else {
+        // All pages request
+        const response = await this.getAllData(options);
+        return Array.isArray(response) ? response : [];
+      }
     } catch (error) {
       this.handleError("GET LOW STOCK ITEMS ERROR", error);
       return [];

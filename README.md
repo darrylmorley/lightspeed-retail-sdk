@@ -6,11 +6,16 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 
 ### **🆕 Recent Updates (v3.2.0)**
 
-- **Enhanced Error Handling**: All GET methods now return consistent types, never `undefined`
-- **Improved getItems Method**: New object-based parameters with timestamp filtering support
-- **Robust API Error Recovery**: Graceful handling of bad requests and empty responses
-- **Better Debugging**: Enhanced error logging with URLs, status codes, and response data
-- **Type Safety**: Guaranteed array returns for all list methods
+- **🎯 Enhanced Parameter Support**: All main getter methods now support both legacy and new object-based parameters with full backward compatibility
+- **🔄 Flexible Method Signatures**: New object-based parameters support `{ relations, limit, timeStamp, sort }` for all collection methods
+- **⚡ Improved Performance**: Smart pagination with single-page requests when `limit` is specified
+- **🕒 Timestamp Filtering**: Filter records by modification time using ISO timestamp format
+- **📊 Better Sorting**: Sort results by any field using the `sort` parameter
+- **🔒 Enhanced Error Handling**: All GET methods now return consistent types, never `undefined`
+- **🛠️ Robust API Error Recovery**: Graceful handling of bad requests and empty responses
+- **🐛 Better Debugging**: Enhanced error logging with URLs, status codes, and response data
+- **🔐 Type Safety**: Guaranteed array returns for all list methods
+- **📈 Method Coverage**: Updated 20+ methods with new parameter support including getItems, getCustomers, getSales, getOrders, and more
 
 ---
 
@@ -822,12 +827,56 @@ If you're upgrading from a previous version:
 
 ## API Methods
 
+### Enhanced Parameter Support
+
+**All main getter methods now support both legacy and new object-based parameters:**
+
+#### Legacy Parameter Syntax (Still Supported)
+
+```javascript
+const customers = await api.getCustomers("Contact");
+const items = await api.getItems("Category,Vendor", 50);
+const sales = await api.getSales("Customer", 25);
+```
+
+#### New Object-Based Parameter Syntax
+
+```javascript
+const customers = await api.getCustomers({
+  relations: "Contact",
+  limit: 50,
+  timeStamp: "2025-07-07T10:00:00.000Z",
+  sort: "timeStamp",
+});
+
+const items = await api.getItems({
+  relations: "Category,Vendor",
+  limit: 25,
+  timeStamp: "2025-07-07T10:00:00.000Z",
+  sort: "description",
+});
+
+const sales = await api.getSales({
+  relations: "Customer",
+  limit: 100,
+  timeStamp: "2025-07-07T10:00:00.000Z",
+  sort: "timeStamp",
+});
+```
+
+#### Available Parameters
+
+- **relations**: Load related data (e.g., 'Category,Vendor')
+- **limit**: Limit number of results (max 100) - triggers single-page request
+- **timeStamp**: Filter by timestamp (ISO format) - retrieves records updated since this time
+- **sort**: Sort results by field (e.g., 'timeStamp', 'description')
+
 ### Core Resources
 
 #### Customers
 
 - `getCustomer(id, relations)` - Fetch a specific customer by ID
-- `getCustomers(relations)` - Retrieve all customers
+- `getCustomers(params)` - Retrieve all customers ✨ **Enhanced with object parameters**
 - `putCustomer(id, data)` - Update a customer
 - `postCustomer(data)` - Create a new customer
 - `searchCustomers(searchTerm, relations)` - Search customers by name or email
@@ -835,16 +884,14 @@ If you're upgrading from a previous version:
 #### Items
 
 - `getItem(id, relations)` - Fetch a specific item by ID
-- `getItems(params)` - Retrieve all items with flexible filtering options:
-  - **Legacy usage**: `getItems(relations, limit)` - Still supported for backward compatibility
-  - **New object syntax**: `getItems({ relations, limit, timeStamp, sort })` - Enhanced filtering with timestamp support
+- `getItems(params)` - Retrieve all items ✨ **Enhanced with object parameters**
 - `getMultipleItems(items, relations)` - Get multiple items by IDs
 - `putItem(id, data)` - Update an item
 - `postItem(data)` - Create a new item
 - `getVendorItems(vendorID, relations)` - Get items by vendor
 - `searchItems(searchTerm, relations)` - Search items by description
-- `getItemsByCategory(categoryId, relations)` - Get items in a category
-- `getItemsWithLowStock(threshold, relations)` - Get items below stock threshold
+- `getItemsByCategory(params)` - Get items in a category ✨ **Enhanced with object parameters**
+- `getItemsWithLowStock(params)` - Get items below stock threshold ✨ **Enhanced with object parameters**
 - `updateMultipleItems(updates)` - Bulk update multiple items
 
 **Enhanced getItems Examples:**
@@ -867,44 +914,44 @@ const itemsWithCategories = await api.getItems({ relations: "Category" });
 #### Matrix Items
 
 - `getMatrixItem(id, relations)` - Fetch a specific matrix item by ID
-- `getMatrixItems(relations)` - Retrieve all matrix items
+- `getMatrixItems(params)` - Retrieve all matrix items ✨ **Enhanced with object parameters**
 - `putMatrixItem(id, data)` - Update a matrix item
 - `postMatrixItem(data)` - Create a new matrix item
 
 #### Categories
 
 - `getCategory(id, relations)` - Fetch a specific category by ID
-- `getCategories(relations)` - Retrieve all categories
+- `getCategories(params)` - Retrieve all categories ✨ **Enhanced with object parameters**
 - `putCategory(id, data)` - Update a category
 - `postCategory(data)` - Create a new category
 
 #### Manufacturers
 
 - `getManufacturer(id, relations)` - Fetch a specific manufacturer by ID
-- `getManufacturers(relations)` - Retrieve all manufacturers
+- `getManufacturers(params)` - Retrieve all manufacturers ✨ **Enhanced with object parameters**
 - `putManufacturer(id, data)` - Update a manufacturer
 - `postManufacturer(data)` - Create a new manufacturer
 
 #### Vendors
 
 - `getVendor(id, relations)` - Fetch a specific vendor by ID
-- `getVendors(relations)` - Retrieve all vendors
+- `getVendors(params)` - Retrieve all vendors ✨ **Enhanced with object parameters**
 - `putVendor(id, data)` - Update a vendor
 - `postVendor(data)` - Create a new vendor
 
 #### Orders
 
 - `getOrder(id, relations)` - Fetch a specific order by ID
-- `getOrders(relations)` - Retrieve all orders
+- `getOrders(params)` - Retrieve all orders ✨ **Enhanced with object parameters**
 - `getOrdersByVendorID(id, relations)` - Get orders by vendor
 - `getOpenOrdersByVendorID(id, relations)` - Get open orders by vendor
 
 #### Sales
 
 - `getSale(id, relations)` - Fetch a specific sale by ID
-- `getSales(relations)` - Retrieve all sales
+- `getSales(params)` - Retrieve all sales ✨ **Enhanced with object parameters**
 - `getMultipleSales(saleIDs, relations)` - Get multiple sales by IDs
-- `getSalesByDateRange(startDate, endDate, relations)` - Get sales in date range
+- `getSalesByDateRange(params)` - Get sales in date range ✨ **Enhanced with object parameters**
 - `putSale(id, data)` - Update a sale
 - `postSale(data)` - Create a new sale
 
@@ -922,26 +969,26 @@ const itemsWithCategories = await api.getItems({ relations: "Category" });
 
 #### Employees
 
-- `getEmployees(relations)` - Get all employees
+- `getEmployees(params)` - Get all employees ✨ **Enhanced with object parameters**
 - `getEmployee(id, relations)` - Get a specific employee
 
 #### System Configuration
 
-- `getCustomerTypes(relations)` - Get customer types
-- `getRegisters(relations)` - Get registers/shops
-- `getPaymentTypes(relations)` - Get payment types
-- `getTaxClasses(relations)` - Get tax classes
-- `getItemAttributes(relations)` - Get item attributes
+- `getCustomerTypes(params)` - Get customer types ✨ **Enhanced with object parameters**
+- `getRegisters(params)` - Get registers/shops ✨ **Enhanced with object parameters**
+- `getPaymentTypes(params)` - Get payment types ✨ **Enhanced with object parameters**
+- `getTaxClasses(params)` - Get tax classes ✨ **Enhanced with object parameters**
+- `getItemAttributes(params)` - Get item attributes ✨ **Enhanced with object parameters**
 
 ### Gift Cards & Special Orders
 
-- `getGiftCards(relations)` - Get all gift cards
+- `getGiftCards(params)` - Get all gift cards ✨ **Enhanced with object parameters**
 - `getGiftCard(id, relations)` - Get a specific gift card by code
-- `getSpecialOrders(relations)` - Get special orders
+- `getSpecialOrders(params)` - Get special orders ✨ **Enhanced with object parameters**
 
 ### Images
 
-- `getImages(relations)` - Get all images
+- `getImages(params)` - Get all images ✨ **Enhanced with object parameters**
 - `postImage(imageFilePath, metadata)` - Upload an image
 
 ### Utility Methods
