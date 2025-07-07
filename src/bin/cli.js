@@ -87,8 +87,6 @@ program
       // 2. Build OAuth URL
       const authUrl = `https://cloud.lightspeedapp.com/auth/oauth/authorize?response_type=code&client_id=${encodeURIComponent(
         clientID
-      )}&redirect_uri=${encodeURIComponent(
-        redirectUri
       )}&scope=${encodeURIComponent(scopes)}`;
 
       console.log("\nOpening browser for authentication...");
