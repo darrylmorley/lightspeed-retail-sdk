@@ -4,7 +4,7 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 
 **Current Version: 3.2.0** — Now with secure encrypted token storage using Node.js crypto. Useful CLI tools, database tools & email warnings on auth failure.
 
-### **🆕 Recent Updates (v3.2.0)**
+## **🆕 Recent Updates (v3.2.0)**
 
 - **🎯 Enhanced Parameter Support**: All main getter methods now support both legacy and new object-based parameters with full backward compatibility
 - **🔄 Flexible Method Signatures**: New object-based parameters support `{ relations, limit, timeStamp, sort }` for all collection methods
@@ -17,86 +17,140 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 - **🔐 Type Safety**: Guaranteed array returns for all list methods
 - **📈 Method Coverage**: Updated 20+ methods with new parameter support including getItems, getCustomers, getSales, getOrders, and more
 
+## 🚀 Key Features
+
+- **Modern API**: Object-based parameters with full backward compatibility
+- **Timestamp Filtering**: Get only records updated since a specific time
+- **Robust Error Handling**: Clean, silent error handling with consistent return types
+- **Enhanced CLI**: Browser selection, default scopes, and improved authentication
+- **Multiple Storage Options**: File, encrypted, database, and in-memory token storage
+- **Comprehensive Coverage**: 20+ API methods with consistent interfaces
+
+## 🔄 Migrating from 3.1.x
+
+### Backward Compatibility
+
+All existing code continues to work unchanged. **No breaking changes in 3.2.0**.
+
+### New Features Available
+
+```javascript
+// Old way (still works)
+const items = await sdk.getItems("Category,Vendor", 50);
+
+// New way (recommended)
+const items = await sdk.getItems({
+  relations: "Category,Vendor",
+  limit: 50,
+  timeStamp: "2025-01-01T00:00:00.000Z"
+});
+```
+
+### Enhanced Error Handling
+
+- Methods now return empty arrays instead of undefined on errors
+- Less verbose logging for common API failures
+- Consistent error handling across all methods
+
+### What's New in 3.2.0
+
+- **Object-based parameters** for all 20+ collection methods
+- **Timestamp filtering** to get only recent changes
+- **Clean error handling** with minimal logging
+- **Enhanced CLI** with browser selection and better defaults
+- **Improved token management** with better error recovery
+
 ---
 
 ## Table of Contents
 
 - [Another Unofficial Lightspeed Retail V3 API SDK](#another-unofficial-lightspeed-retail-v3-api-sdk)
-  - [Table of Contents](#table-of-contents)
-  - [🚨 Important Update - New OAuth System](#-important-update---new-oauth-system)
-    - [Key Changes](#key-changes)
-  - [Interactive CLI](#interactive-cli)
-    - [Getting Started with the CLI](#getting-started-with-the-cli)
-    - [Available CLI Commands](#available-cli-commands)
-      - [Authentication \& Setup](#authentication--setup)
-      - [Storage Management](#storage-management)
-      - [Email Testing](#email-testing)
-    - [CLI Features](#cli-features)
-      - [Interactive Storage Selection](#interactive-storage-selection)
-      - [OAuth Authentication Flow](#oauth-authentication-flow)
-      - [Token Management](#token-management)
-        - [Manual Token Refresh](#manual-token-refresh)
-        - [Token Status Checking](#token-status-checking)
-      - [Database Setup Wizard](#database-setup-wizard)
-      - [Token Migration](#token-migration)
-      - [Security Features](#security-features)
-      - [Email Notifications](#email-notifications)
-    - [CLI Configuration](#cli-configuration)
-    - [CLI Examples](#cli-examples)
-  - [Features](#features)
-  - [Smart Token Management](#smart-token-management)
-    - [Token Priority Order](#token-priority-order)
-  - [Environment Variables](#environment-variables)
-  - [Installation](#installation)
-    - [Global CLI Installation (Recommended)](#global-cli-installation-recommended)
-    - [Local Installation](#local-installation)
-    - [Configuration](#configuration)
-  - [Quick Start](#quick-start)
-    - [Modern CLI-First Approach (Recommended)](#modern-cli-first-approach-recommended)
-      - [Alternative: Local Installation](#alternative-local-installation)
-    - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
-    - [Manual Token Management (Advanced)](#manual-token-management-advanced)
-      - [File-Based Storage](#file-based-storage)
-      - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
-  - [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
-    - [Database Setup](#database-setup)
-      - [Option 1: Use the CLI (Recommended)](#option-1-use-the-cli-recommended)
-      - [Option 2: Manual Setup](#option-2-manual-setup)
-    - [PostgreSQL Schema](#postgresql-schema)
-    - [SQLite Schema](#sqlite-schema)
-    - [MongoDB Schema](#mongodb-schema)
-    - [Example: Using DatabaseTokenStorage](#example-using-databasetokenstorage)
-    - [Notes](#notes)
-    - [Custom Storage Interface (Advanced)](#custom-storage-interface-advanced)
-  - [CommonJS Usage](#commonjs-usage)
-    - [ES Modules (Recommended)](#es-modules-recommended)
-    - [CommonJS](#commonjs)
-  - [Migration from Previous Versions](#migration-from-previous-versions)
-  - [API Methods](#api-methods)
-    - [Core Resources](#core-resources)
-      - [Customers](#customers)
-      - [Items](#items)
-      - [Matrix Items](#matrix-items)
-      - [Categories](#categories)
-      - [Manufacturers](#manufacturers)
-      - [Vendors](#vendors)
-      - [Orders](#orders)
-      - [Sales](#sales)
-      - [Sale Lines](#sale-lines)
-    - [Account \& Configuration](#account--configuration)
-      - [Account Information](#account-information)
-      - [Employees](#employees)
-      - [System Configuration](#system-configuration)
-    - [Gift Cards \& Special Orders](#gift-cards--special-orders)
-    - [Images](#images)
-    - [Utility Methods](#utility-methods)
-  - [Error Handling](#error-handling)
-  - [Rate Limiting](#rate-limiting)
-  - [Pagination](#pagination)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Disclaimer](#disclaimer)
-  - [More Info](#more-info)
+  - [**🆕 Recent Updates (v3.2.0)**](#-recent-updates-v320)
+- [🚀 Key Features](#-key-features)
+- [🔄 Migrating from 3.1.x](#-migrating-from-31x)
+- [Table of Contents](#table-of-contents)
+- [🚨 Important Update - New OAuth System](#-important-update---new-oauth-system)
+  - [Key Changes](#key-changes)
+- [Interactive CLI](#interactive-cli)
+  - [Getting Started with the CLI](#getting-started-with-the-cli)
+  - [Available CLI Commands](#available-cli-commands)
+    - [Authentication \& Setup](#authentication--setup)
+    - [Storage Management](#storage-management)
+    - [Email Testing](#email-testing)
+  - [CLI Features](#cli-features)
+    - [Interactive Storage Selection](#interactive-storage-selection)
+    - [OAuth Authentication Flow](#oauth-authentication-flow)
+    - [Token Management](#token-management)
+      - [Manual Token Refresh](#manual-token-refresh)
+      - [Token Status Checking](#token-status-checking)
+    - [Database Setup Wizard](#database-setup-wizard)
+    - [Token Migration](#token-migration)
+    - [Security Features](#security-features)
+    - [Email Notifications](#email-notifications)
+  - [CLI Configuration](#cli-configuration)
+  - [CLI Examples](#cli-examples)
+- [Features](#features)
+- [Smart Token Management](#smart-token-management)
+  - [Token Priority Order](#token-priority-order)
+- [Environment Variables](#environment-variables)
+- [Installation](#installation)
+  - [Global CLI Installation (Recommended)](#global-cli-installation-recommended)
+  - [Local Installation](#local-installation)
+  - [Configuration](#configuration)
+- [Quick Start](#quick-start)
+  - [Modern CLI-First Approach (Recommended)](#modern-cli-first-approach-recommended)
+    - [Alternative: Local Installation](#alternative-local-installation)
+  - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
+  - [Manual Token Management (Advanced)](#manual-token-management-advanced)
+    - [File-Based Storage](#file-based-storage)
+    - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
+- [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
+  - [Database Setup](#database-setup)
+    - [Option 1: Use the CLI (Recommended)](#option-1-use-the-cli-recommended)
+    - [Option 2: Manual Setup](#option-2-manual-setup)
+  - [PostgreSQL Schema](#postgresql-schema)
+  - [SQLite Schema](#sqlite-schema)
+  - [MongoDB Schema](#mongodb-schema)
+  - [Example: Using DatabaseTokenStorage](#example-using-databasetokenstorage)
+  - [Notes](#notes)
+  - [Custom Storage Interface (Advanced)](#custom-storage-interface-advanced)
+- [CommonJS Usage](#commonjs-usage)
+  - [ES Modules (Recommended)](#es-modules-recommended)
+  - [CommonJS](#commonjs)
+- [Migration from Previous Versions](#migration-from-previous-versions)
+- [API Methods](#api-methods)
+  - [Enhanced Parameter Support](#enhanced-parameter-support)
+    - [Legacy Parameter Syntax (Still Supported)](#legacy-parameter-syntax-still-supported)
+    - [New Object-Based Parameter Syntax](#new-object-based-parameter-syntax)
+    - [Available Parameters](#available-parameters)
+  - [Core Resources](#core-resources)
+    - [Customers](#customers)
+    - [Items](#items)
+    - [Matrix Items](#matrix-items)
+    - [Categories](#categories)
+    - [Manufacturers](#manufacturers)
+    - [Vendors](#vendors)
+    - [Orders](#orders)
+    - [Sales](#sales)
+    - [Sale Lines](#sale-lines)
+  - [Account \& Configuration](#account--configuration)
+    - [Account Information](#account-information)
+    - [Employees](#employees)
+    - [System Configuration](#system-configuration)
+  - [Gift Cards \& Special Orders](#gift-cards--special-orders)
+  - [Images](#images)
+  - [Utility Methods](#utility-methods)
+- [Error Handling](#error-handling)
+  - [**Automatic Error Recovery**](#automatic-error-recovery)
+  - [**Safe Return Types**](#safe-return-types)
+  - [**Enhanced Error Logging**](#enhanced-error-logging)
+  - [**Graceful Degradation**](#graceful-degradation)
+- [Rate Limiting](#rate-limiting)
+- [Pagination](#pagination)
+- [Contributing](#contributing)
+- [License](#license)
+- [Disclaimer](#disclaimer)
+- [More Info](#more-info)
 
 ## 🚨 Important Update - New OAuth System
 
