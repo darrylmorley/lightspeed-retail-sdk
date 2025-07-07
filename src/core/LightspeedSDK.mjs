@@ -94,28 +94,24 @@ export class LightspeedSDKCore {
     const errorMessage = err?.message || "Unknown error occurred";
     const detailedMessage = `Error in ${context}: ${errorMessage}`;
 
-    console.error(detailedMessage);
-
-    if (err?.stack) {
-      console.error("Stack trace:", err.stack);
+    // For common scenarios like "No refresh token available" or empty responses,
+    // don't log anything if shouldThrow is false
+    if (!shouldThrow) {
+      return; // Silent handling for warnings/empty responses
     }
 
-    if (err?.response) {
-      console.error("Error response:", {
-        status: err.response?.status,
-        headers: err.response?.headers,
-        data: err.response?.data,
-      });
-    } else if (!err?.response && typeof err === "object") {
-      console.error("Non-response error object:", err);
-    } else if (typeof err === "string") {
-      console.error("Error as string:", err);
-    } else {
-      console.error("Error of unknown type:", err);
+    // Only log errors that are actually unexpected
+    if (
+      shouldThrow &&
+      !errorMessage.includes("No refresh token available") &&
+      !errorMessage.includes("No data available") &&
+      !errorMessage.includes("Empty response")
+    ) {
+      console.error(detailedMessage);
+    }
 
-      if (shouldThrow) {
-        throw new Error(detailedMessage);
-      }
+    if (shouldThrow) {
+      throw new Error(detailedMessage);
     }
   }
 
@@ -243,14 +239,22 @@ export class LightspeedSDKCore {
       if (options.method === "GET") {
         // Handle successful response with no data or empty data
         if (!res.data || Object.keys(res.data).length === 0) {
-          console.log(
-            `✅ API returned empty response (no data available) for ${options.url}`
-          );
           return {
             data: {},
             next: null,
             previous: null,
           };
+        }
+
+        // Check if response has the expected structure but with empty arrays
+        const dataKeys = Object.keys(res.data).filter(
+          (key) => key !== "@attributes"
+        );
+        if (dataKeys.length > 0) {
+          const firstDataKey = dataKeys[0];
+          const firstDataValue = res.data[firstDataKey];
+
+          // No need to log for empty arrays - this is normal
         }
 
         // Handle successful response with data
@@ -289,29 +293,7 @@ export class LightspeedSDKCore {
         await sleep(2000);
         return this.executeApiRequest(options, retries + 1);
       } else {
-        // Enhanced error logging for debugging
-        const errorMsg = `Failed Request statusText: ${err.response?.statusText || "Unknown error occurred"}`;
-        const errorData = err.response?.data;
-        const errorStatus = err.response?.status;
-
-        // Only log as error if it's actually an error status code
-        if (errorStatus && errorStatus >= 400) {
-          this.handleError(errorMsg);
-          if (errorData) {
-            this.handleError(`Failed data: ${JSON.stringify(errorData)}`);
-          }
-          this.handleError(`Status code: ${errorStatus}`);
-          if (options.url) {
-            this.handleError(`Request URL: ${options.url}`);
-          }
-        } else {
-          // Log as warning for non-error status codes
-          console.warn(`Unexpected response: ${errorMsg}`);
-          if (errorStatus) {
-            console.warn(`Status code: ${errorStatus}`);
-          }
-        }
-
+        // Simple error handling - let the calling method decide how to handle it
         throw err;
       }
     }
@@ -326,9 +308,6 @@ export class LightspeedSDKCore {
 
         // Handle successful empty responses
         if (!data || Object.keys(data).length === 0) {
-          console.log(
-            `✅ No data available for ${options.url} - returning empty array`
-          );
           break;
         }
 
@@ -340,9 +319,6 @@ export class LightspeedSDKCore {
         );
 
         if (dataKeys.length === 0) {
-          console.log(
-            `✅ No data keys found in response for ${options.url} - returning empty array`
-          );
           break;
         }
 
@@ -351,17 +327,11 @@ export class LightspeedSDKCore {
 
         // Handle case where selectedData is undefined, null, or empty array
         if (!selectedData) {
-          console.log(
-            `✅ No data found for key: ${selectDataArray} - this is normal when no records match the criteria`
-          );
           break;
         }
 
         if (Array.isArray(selectedData)) {
           if (selectedData.length === 0) {
-            console.log(
-              `✅ Empty array returned for ${selectDataArray} - no records match the criteria`
-            );
             break;
           }
           allData = allData.concat(selectedData);
@@ -373,11 +343,7 @@ export class LightspeedSDKCore {
         options.url = next;
       }
     } catch (error) {
-      // Log the error but don't throw it - return empty array instead
-      console.warn(
-        "Error in getAllData, returning empty array:",
-        error.message
-      );
+      // Silent error handling for empty responses - just return empty array
       return [];
     }
     return allData;
