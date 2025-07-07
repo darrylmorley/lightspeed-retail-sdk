@@ -50,9 +50,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET CUSTOMERS ERROR", error);
+      return this.handleError("GET CUSTOMER ERROR", error);
     }
   }
 
@@ -67,7 +67,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET CUSTOMERS ERROR", error);
     }
@@ -121,7 +121,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ITEM ERROR", error);
     }
@@ -134,7 +134,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       method: "GET",
     };
 
-    if (!items) this.handleError("You need to provide itemID's");
+    if (!items) return this.handleError("You need to provide itemID's");
 
     if (items) options.url = options.url + `?itemID=IN,${items}`;
 
@@ -142,14 +142,14 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ITEMS ERROR", error);
     }
   }
 
   // Get all items
-  async getItems(relations, limit = null) {
+  async getItems(params = {}) {
     const options = {
       url: `${this.baseUrl}/${this.accountID}/Item.json`,
       method: "GET",
@@ -157,12 +157,36 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     const searchParams = new URLSearchParams();
 
-    if (relations) {
-      searchParams.append("load_relations", relations);
-    }
+    // Handle legacy parameters (relations, limit) for backward compatibility
+    if (typeof params === "string") {
+      // Legacy: first parameter is relations
+      const relations = params;
+      const limit = arguments[1];
 
-    if (limit) {
-      searchParams.append("limit", Math.min(limit, 100));
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+    } else if (typeof params === "object" && params !== null) {
+      // New object-based parameters
+      const { relations, limit, timeStamp, sort } = params;
+
+      if (relations) {
+        searchParams.append("load_relations", relations);
+      }
+      if (limit) {
+        searchParams.append("limit", Math.min(limit, 100));
+      }
+      if (timeStamp) {
+        // Handle timestamp filtering - expect ISO string, convert to Lightspeed format
+        const encodedTimestamp = encodeURIComponent(`>${timeStamp}`);
+        searchParams.append("timeStamp", encodedTimestamp);
+      }
+      if (sort) {
+        searchParams.append("sort", sort);
+      }
     }
 
     const queryString = searchParams.toString();
@@ -171,7 +195,11 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
     }
 
     try {
-      if (limit) {
+      const isLimitedRequest =
+        (typeof params === "string" && arguments[1]) ||
+        (typeof params === "object" && params?.limit);
+
+      if (isLimitedRequest) {
         // Single page request
         const response = await this.executeApiRequest(options);
 
@@ -226,7 +254,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ITEMS ERROR", error);
     }
@@ -245,9 +273,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEM ERROR", error);
+      return this.handleError("GET MATRIX ITEM ERROR", error);
     }
   }
 
@@ -262,9 +290,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEM ERROR", error);
+      return this.handleError("GET MATRIX ITEMS ERROR", error);
     }
   }
 
@@ -318,7 +346,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET CATEGORY ERROR", error);
     }
@@ -335,7 +363,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET CATEGORIES ERROR", error);
     }
@@ -390,7 +418,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET MANUFACTURER ERROR", error);
     }
@@ -407,7 +435,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET MANUFACTURERS ERROR", error);
     }
@@ -463,7 +491,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ORDER ERROR", error);
     }
@@ -480,7 +508,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ORDERS ERROR", error);
     }
@@ -499,9 +527,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ORDER ERROR", error);
+      return this.handleError("GET ORDERS BY VENDOR ERROR", error);
     }
   }
 
@@ -518,9 +546,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ORDER ERROR", error);
+      return this.handleError("GET OPEN ORDERS BY VENDOR ERROR", error);
     }
   }
 
@@ -537,7 +565,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET VENDOR ERROR", error);
     }
@@ -554,7 +582,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET VENDORS ERROR", error);
     }
@@ -626,7 +654,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET SALES ERROR", error);
     }
@@ -642,9 +670,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
+      return this.handleError("GET MULTIPLE SALES ERROR", error);
     }
   }
 
@@ -1077,7 +1105,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET SALES BY DATE RANGE ERROR", error);
     }
@@ -1096,7 +1124,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET ITEMS BY CATEGORY ERROR", error);
     }
@@ -1113,7 +1141,7 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 
     try {
       const response = await this.getAllData(options);
-      return response;
+      return Array.isArray(response) ? response : [];
     } catch (error) {
       return this.handleError("GET LOW STOCK ITEMS ERROR", error);
     }

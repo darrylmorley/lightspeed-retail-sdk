@@ -276,10 +276,22 @@ export class LightspeedSDKCore {
         await sleep(2000);
         return this.executeApiRequest(options, retries + 1);
       } else {
-        this.handleError(
-          `Failed Request statusText: ${err.response?.statusText}`
-        );
-        this.handleError(`Failed data: ${err.response?.data}`);
+        // Enhanced error logging for debugging
+        const errorMsg = `Failed Request statusText: ${err.response?.statusText || "Unknown error occurred"}`;
+        const errorData = err.response?.data;
+        const errorStatus = err.response?.status;
+
+        this.handleError(errorMsg);
+        if (errorData) {
+          this.handleError(`Failed data: ${JSON.stringify(errorData)}`);
+        }
+        if (errorStatus) {
+          this.handleError(`Status code: ${errorStatus}`);
+        }
+        if (options.url) {
+          this.handleError(`Request URL: ${options.url}`);
+        }
+
         throw err;
       }
     }
@@ -290,10 +302,44 @@ export class LightspeedSDKCore {
     let allData = [];
     while (options.url) {
       const { data } = await this.executeApiRequest(options);
-      let next = data["@attributes"].next;
-      let selectDataArray = Object.keys(data)[1];
-      let selectedData = data[selectDataArray];
-      allData = allData.concat(selectedData);
+
+      // Handle empty or malformed responses
+      if (!data || typeof data !== "object") {
+        console.warn("Empty or invalid data response, stopping pagination");
+        break;
+      }
+
+      // Check if we have @attributes
+      const attributes = data["@attributes"];
+      if (!attributes) {
+        console.warn("No @attributes found in response, stopping pagination");
+        break;
+      }
+
+      const next = attributes.next;
+      const dataKeys = Object.keys(data).filter((key) => key !== "@attributes");
+
+      if (dataKeys.length === 0) {
+        console.warn("No data keys found in response, stopping pagination");
+        break;
+      }
+
+      const selectDataArray = dataKeys[0];
+      const selectedData = data[selectDataArray];
+
+      // Handle case where selectedData is undefined or not an array
+      if (!selectedData) {
+        console.warn("No data found for key:", selectDataArray);
+        break;
+      }
+
+      if (Array.isArray(selectedData)) {
+        allData = allData.concat(selectedData);
+      } else {
+        // Single item, wrap in array
+        allData.push(selectedData);
+      }
+
       options.url = next;
     }
     return allData;
