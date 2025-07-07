@@ -25,7 +25,7 @@
     "test:all": "npm run test && npm run test:cjs && npm run test:storage && npm run test:sqlite && npm run test:postgres && npm run test:mongodb",
     "cli": "node src/bin/cli.js",
     "build": "npm run clean && npm run prebuild && npm run build:esm && npm run build:cjs && npm run fix-paths && npm run fix-exports",
-    "fix-exports": "echo '\n// Convenience export for CommonJS\nmodule.exports = exports.default;\nmodule.exports.default = exports.default;\nmodule.exports.FileTokenStorage = exports.FileTokenStorage;\nmodule.exports.InMemoryTokenStorage = exports.InMemoryTokenStorage;\nmodule.exports.DatabaseTokenStorage = exports.DatabaseTokenStorage;' >> dist/index.cjs",
+    "fix-exports": "echo '\n// Convenience export for CommonJS\nmodule.exports = exports.default;\nmodule.exports.default = exports.default;\nmodule.exports.FileTokenStorage = exports.FileTokenStorage;\nmodule.exports.InMemoryTokenStorage = exports.InMemoryTokenStorage;\nmodule.exports.EncryptedTokenStorage = exports.EncryptedTokenStorage;\nmodule.exports.DatabaseTokenStorage = exports.DatabaseTokenStorage;' >> dist/index.cjs",
     "build:esm": "cp index.mjs dist/index.mjs && cp -r src dist/",
     "build:cjs": "npm run build:core && npm run build:storage && npm run build:main",
     "build:core": "swc src/core/LightspeedSDK.mjs -o dist/src/core/LightspeedSDK.cjs",

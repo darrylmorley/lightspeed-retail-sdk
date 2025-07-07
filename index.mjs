@@ -2,6 +2,7 @@ import { LightspeedSDKCore } from "./src/core/LightspeedSDK.mjs";
 import {
   InMemoryTokenStorage,
   FileTokenStorage,
+  EncryptedTokenStorage,
   DatabaseTokenStorage,
 } from "./src/storage/TokenStorage.mjs";
 
@@ -1157,4 +1158,9 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
 }
 
 export default LightspeedRetailSDK;
-export { FileTokenStorage, InMemoryTokenStorage, DatabaseTokenStorage };
+export {
+  FileTokenStorage,
+  InMemoryTokenStorage,
+  EncryptedTokenStorage,
+  DatabaseTokenStorage,
+};
