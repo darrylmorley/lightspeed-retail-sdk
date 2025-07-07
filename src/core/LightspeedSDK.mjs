@@ -300,47 +300,58 @@ export class LightspeedSDKCore {
   // Paginated data fetching
   async getAllData(options) {
     let allData = [];
-    while (options.url) {
-      const { data } = await this.executeApiRequest(options);
+    try {
+      while (options.url) {
+        const { data } = await this.executeApiRequest(options);
 
-      // Handle empty or malformed responses
-      if (!data || typeof data !== "object") {
-        console.warn("Empty or invalid data response, stopping pagination");
-        break;
+        // Handle empty or malformed responses
+        if (!data || typeof data !== "object") {
+          console.warn("Empty or invalid data response, stopping pagination");
+          break;
+        }
+
+        // Check if we have @attributes
+        const attributes = data["@attributes"];
+        if (!attributes) {
+          console.warn("No @attributes found in response, stopping pagination");
+          break;
+        }
+
+        const next = attributes.next;
+        const dataKeys = Object.keys(data).filter(
+          (key) => key !== "@attributes"
+        );
+
+        if (dataKeys.length === 0) {
+          console.warn("No data keys found in response, stopping pagination");
+          break;
+        }
+
+        const selectDataArray = dataKeys[0];
+        const selectedData = data[selectDataArray];
+
+        // Handle case where selectedData is undefined or not an array
+        if (!selectedData) {
+          console.warn("No data found for key:", selectDataArray);
+          break;
+        }
+
+        if (Array.isArray(selectedData)) {
+          allData = allData.concat(selectedData);
+        } else {
+          // Single item, wrap in array
+          allData.push(selectedData);
+        }
+
+        options.url = next;
       }
-
-      // Check if we have @attributes
-      const attributes = data["@attributes"];
-      if (!attributes) {
-        console.warn("No @attributes found in response, stopping pagination");
-        break;
-      }
-
-      const next = attributes.next;
-      const dataKeys = Object.keys(data).filter((key) => key !== "@attributes");
-
-      if (dataKeys.length === 0) {
-        console.warn("No data keys found in response, stopping pagination");
-        break;
-      }
-
-      const selectDataArray = dataKeys[0];
-      const selectedData = data[selectDataArray];
-
-      // Handle case where selectedData is undefined or not an array
-      if (!selectedData) {
-        console.warn("No data found for key:", selectDataArray);
-        break;
-      }
-
-      if (Array.isArray(selectedData)) {
-        allData = allData.concat(selectedData);
-      } else {
-        // Single item, wrap in array
-        allData.push(selectedData);
-      }
-
-      options.url = next;
+    } catch (error) {
+      // Log the error but don't throw it - return empty array instead
+      console.warn(
+        "Error in getAllData, returning empty array:",
+        error.message
+      );
+      return [];
     }
     return allData;
   }

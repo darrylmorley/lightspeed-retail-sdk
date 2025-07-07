@@ -33,7 +33,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       if (response?.Account) return response;
       return response;
     } catch (error) {
-      return this.handleError("GET ACCOUNT ERROR", error);
+      this.handleError("GET ACCOUNT ERROR", error);
+      return [];
     }
   }
 
@@ -52,7 +53,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET CUSTOMER ERROR", error);
+      this.handleError("GET CUSTOMER ERROR", error);
+      return [];
     }
   }
 
@@ -69,7 +71,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET CUSTOMERS ERROR", error);
+      this.handleError("GET CUSTOMERS ERROR", error);
+      return [];
     }
   }
 
@@ -123,7 +126,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEM ERROR", error);
+      this.handleError("GET ITEM ERROR", error);
+      return [];
     }
   }
 
@@ -144,7 +148,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEMS ERROR", error);
+      this.handleError("GET ITEMS ERROR", error);
+      return [];
     }
   }
 
@@ -221,7 +226,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
         return Array.isArray(response) ? response : [];
       }
     } catch (error) {
-      return this.handleError("GET ITEMS ERROR", error);
+      this.handleError("GET ITEMS ERROR", error);
+      return [];
     }
   }
 
@@ -256,7 +262,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEMS ERROR", error);
+      this.handleError("GET ITEMS ERROR", error);
+      return [];
     }
   }
 
@@ -275,7 +282,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET MATRIX ITEM ERROR", error);
+      this.handleError("GET MATRIX ITEM ERROR", error);
+      return [];
     }
   }
 
@@ -292,7 +300,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET MATRIX ITEMS ERROR", error);
+      this.handleError("GET MATRIX ITEMS ERROR", error);
+      return [];
     }
   }
 
@@ -348,7 +357,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET CATEGORY ERROR", error);
+      this.handleError("GET CATEGORY ERROR", error);
+      return [];
     }
   }
 
@@ -365,7 +375,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET CATEGORIES ERROR", error);
+      this.handleError("GET CATEGORIES ERROR", error);
+      return [];
     }
   }
 
@@ -420,7 +431,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET MANUFACTURER ERROR", error);
+      this.handleError("GET MANUFACTURER ERROR", error);
+      return [];
     }
   }
 
@@ -437,7 +449,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET MANUFACTURERS ERROR", error);
+      this.handleError("GET MANUFACTURERS ERROR", error);
+      return [];
     }
   }
 
@@ -493,7 +506,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ORDER ERROR", error);
+      this.handleError("GET ORDER ERROR", error);
+      return [];
     }
   }
 
@@ -510,7 +524,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ORDERS ERROR", error);
+      this.handleError("GET ORDERS ERROR", error);
+      return [];
     }
   }
 
@@ -529,7 +544,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ORDERS BY VENDOR ERROR", error);
+      this.handleError("GET ORDERS BY VENDOR ERROR", error);
+      return [];
     }
   }
 
@@ -548,7 +564,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET OPEN ORDERS BY VENDOR ERROR", error);
+      this.handleError("GET OPEN ORDERS BY VENDOR ERROR", error);
+      return [];
     }
   }
 
@@ -567,7 +584,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET VENDOR ERROR", error);
+      this.handleError("GET VENDOR ERROR", error);
+      return [];
     }
   }
 
@@ -584,7 +602,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET VENDORS ERROR", error);
+      this.handleError("GET VENDORS ERROR", error);
+      return [];
     }
   }
 
@@ -639,7 +658,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
+      this.handleError("GET SALE ERROR", error);
+      return [];
     }
   }
 
@@ -656,7 +676,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET SALES ERROR", error);
+      this.handleError("GET SALES ERROR", error);
+      return [];
     }
   }
 
@@ -672,7 +693,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET MULTIPLE SALES ERROR", error);
+      this.handleError("GET MULTIPLE SALES ERROR", error);
+      return [];
     }
   }
 
@@ -726,7 +748,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
+      this.handleError("GET SALE ERROR", error);
+      return [];
     }
   }
 
@@ -759,7 +782,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
+      this.handleError("GET SALE ERROR", error);
+      return [];
     }
   }
 
@@ -792,7 +816,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET SALE ERROR", error);
+      this.handleError("GET SALE ERROR", error);
+      return [];
     }
   }
 
@@ -809,7 +834,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET CREDIT ACCOUNTS ERROR", error);
+      this.handleError("GET CREDIT ACCOUNTS ERROR", error);
+      return [];
     }
   }
 
@@ -828,7 +854,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET CREDIT ACCOUNT ERROR", error);
+      this.handleError("GET CREDIT ACCOUNT ERROR", error);
+      return [];
     }
   }
 
@@ -845,7 +872,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET SPECIAL ORDER ERROR", error);
+      this.handleError("GET SPECIAL ORDER ERROR", error);
+      return [];
     }
   }
 
@@ -861,7 +889,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET IMAGES ERROR", error);
+      this.handleError("GET IMAGES ERROR", error);
+      return [];
     }
   }
 
@@ -929,7 +958,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.executeApiRequest(options);
       return response;
     } catch (error) {
-      return this.handleError("GET ACCOUNT ERROR", error);
+      this.handleError("GET ACCOUNT ERROR", error);
+      return [];
     }
   }
 
@@ -946,7 +976,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET EMPLOYEES ERROR", error);
+      this.handleError("GET EMPLOYEES ERROR", error);
+      return [];
     }
   }
 
@@ -964,7 +995,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.executeApiRequest(options);
       return response;
     } catch (error) {
-      return this.handleError("GET EMPLOYEE ERROR", error);
+      this.handleError("GET EMPLOYEE ERROR", error);
+      return [];
     }
   }
 
@@ -981,7 +1013,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET CUSTOMER TYPES ERROR", error);
+      this.handleError("GET CUSTOMER TYPES ERROR", error);
+      return [];
     }
   }
 
@@ -998,7 +1031,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET REGISTERS ERROR", error);
+      this.handleError("GET REGISTERS ERROR", error);
+      return [];
     }
   }
 
@@ -1015,7 +1049,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET PAYMENT TYPES ERROR", error);
+      this.handleError("GET PAYMENT TYPES ERROR", error);
+      return [];
     }
   }
 
@@ -1032,7 +1067,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET TAX CLASSES ERROR", error);
+      this.handleError("GET TAX CLASSES ERROR", error);
+      return [];
     }
   }
 
@@ -1049,7 +1085,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return response;
     } catch (error) {
-      return this.handleError("GET ITEM ATTRIBUTES ERROR", error);
+      this.handleError("GET ITEM ATTRIBUTES ERROR", error);
+      return [];
     }
   }
 
@@ -1107,7 +1144,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET SALES BY DATE RANGE ERROR", error);
+      this.handleError("GET SALES BY DATE RANGE ERROR", error);
+      return [];
     }
   }
 
@@ -1126,7 +1164,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET ITEMS BY CATEGORY ERROR", error);
+      this.handleError("GET ITEMS BY CATEGORY ERROR", error);
+      return [];
     }
   }
 
@@ -1143,7 +1182,8 @@ class LightspeedRetailSDK extends LightspeedSDKCore {
       const response = await this.getAllData(options);
       return Array.isArray(response) ? response : [];
     } catch (error) {
-      return this.handleError("GET LOW STOCK ITEMS ERROR", error);
+      this.handleError("GET LOW STOCK ITEMS ERROR", error);
+      return [];
     }
   }
 

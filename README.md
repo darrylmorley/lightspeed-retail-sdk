@@ -4,6 +4,14 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 
 **Current Version: 3.2.0** — Now with secure encrypted token storage using Node.js crypto. Useful CLI tools, database tools & email warnings on auth failure.
 
+### **🆕 Recent Updates (v3.2.0)**
+
+- **Enhanced Error Handling**: All GET methods now return consistent types, never `undefined`
+- **Improved getItems Method**: New object-based parameters with timestamp filtering support
+- **Robust API Error Recovery**: Graceful handling of bad requests and empty responses
+- **Better Debugging**: Enhanced error logging with URLs, status codes, and response data
+- **Type Safety**: Guaranteed array returns for all list methods
+
 ---
 
 ## Table of Contents
@@ -827,7 +835,9 @@ If you're upgrading from a previous version:
 #### Items
 
 - `getItem(id, relations)` - Fetch a specific item by ID
-- `getItems(relations, limit)` - Retrieve all items (or limited number if limit specified)
+- `getItems(params)` - Retrieve all items with flexible filtering options:
+  - **Legacy usage**: `getItems(relations, limit)` - Still supported for backward compatibility
+  - **New object syntax**: `getItems({ relations, limit, timeStamp, sort })` - Enhanced filtering with timestamp support
 - `getMultipleItems(items, relations)` - Get multiple items by IDs
 - `putItem(id, data)` - Update an item
 - `postItem(data)` - Create a new item
@@ -836,6 +846,23 @@ If you're upgrading from a previous version:
 - `getItemsByCategory(categoryId, relations)` - Get items in a category
 - `getItemsWithLowStock(threshold, relations)` - Get items below stock threshold
 - `updateMultipleItems(updates)` - Bulk update multiple items
+
+**Enhanced getItems Examples:**
+
+```javascript
+// Legacy usage (still works)
+const items = await api.getItems("Category,Vendor", 50);
+
+// New object-based usage with timestamp filtering
+const recentItems = await api.getItems({
+  timeStamp: "2025-07-07T10:00:00.000Z", // Items updated since this timestamp
+  relations: "Category,Vendor",
+  sort: "timeStamp",
+});
+
+// Basic usage with relations only
+const itemsWithCategories = await api.getItems({ relations: "Category" });
+```
 
 #### Matrix Items
 
@@ -925,17 +952,53 @@ If you're upgrading from a previous version:
 
 ## Error Handling
 
-The SDK includes comprehensive error handling with automatic retries for transient failures:
+The SDK includes comprehensive error handling with automatic retries for transient failures and robust safety guarantees:
+
+### **Automatic Error Recovery**
+
+- **Retry Logic**: Automatic retries for network errors and 5xx server errors
+- **401 Handling**: Automatic token refresh and request retry on authentication failures
+- **Rate Limiting**: Intelligent delays when approaching API rate limits
+
+### **Safe Return Types**
+
+All GET methods are guaranteed to return consistent data types, never `undefined`:
 
 ```javascript
 try {
-  const item = await api.getItem(123);
-  console.log(item);
+  // These methods ALWAYS return arrays (never undefined)
+  const items = await api.getItems({ timeStamp: "2025-07-07T10:00:00Z" });
+  const customers = await api.getCustomers();
+  const categories = await api.getCategories();
+
+  // Safe to access array properties without checking for undefined
+  console.log(`Found ${items.length} items`);
+
+  // Even on API errors, you get an empty array
+  if (items.length === 0) {
+    console.log("No items found or API error occurred");
+  }
 } catch (error) {
-  console.error("API Error:", error.message);
-  // Error details are automatically logged by the SDK
+  console.error("SDK Error:", error.message);
+  // Detailed error logging is handled automatically by the SDK
 }
 ```
+
+### **Enhanced Error Logging**
+
+When errors occur, the SDK provides detailed logging including:
+
+- Request URLs and parameters
+- HTTP status codes and response data
+- Helpful context for debugging
+- Email notifications (when configured) for token refresh failures
+
+### **Graceful Degradation**
+
+- API errors don't crash your application
+- Empty arrays returned instead of undefined
+- Detailed error messages logged for debugging
+- Automatic fallback behavior for common scenarios
 
 ## Rate Limiting
 
