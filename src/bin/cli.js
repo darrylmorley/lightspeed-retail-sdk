@@ -167,10 +167,9 @@ program
           tokenUrl,
           {
             grant_type: "authorization_code",
-            code,
             client_id: clientID,
             client_secret: clientSecret,
-            redirect_uri: redirectUri,
+            code,
           },
           { headers: { "Content-Type": "application/json" } }
         );
