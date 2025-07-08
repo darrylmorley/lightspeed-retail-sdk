@@ -204,30 +204,30 @@ const sdk = new LightspeedRetailSDK({
 //   });
 // });
 
-// describe("ItemEndpoint", function () {
-//   this.timeout(30000);
-//   it("should fetch items by categoryID", async function () {
-//     const items = await sdk.getItemsByCategory(62, {
-//       limit: 5,
-//     });
-//     console.log("Items:", items);
-//     assert(Array.isArray(items));
-//     assert(items.length > 0, "Expected at least one item");
-//   });
-// });
-
 describe("ItemEndpoint", function () {
   this.timeout(30000);
-  it("should fetch items with low stock", async function () {
-    const items = await sdk.getItemsWithLowStock({
+  it("should fetch items by categoryID", async function () {
+    const items = await sdk.getItemsByCategory(62, {
       limit: 5,
-      threshold: 1,
     });
     console.log("Items:", items);
     assert(Array.isArray(items));
     assert(items.length > 0, "Expected at least one item");
   });
 });
+
+// describe("ItemEndpoint", function () {
+//   this.timeout(30000);
+//   it("should fetch items with low stock", async function () {
+//     const items = await sdk.getItemsWithLowStock({
+//       limit: 5,
+//       threshold: 1,
+//     });
+//     console.log("Items:", items);
+//     assert(Array.isArray(items));
+//     assert(items.length > 0, "Expected at least one item");
+//   });
+// });
 
 // describe("ItemAttributeEndpoint", function () {
 //   this.timeout(30000);
