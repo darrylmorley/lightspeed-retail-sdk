@@ -385,12 +385,7 @@ export class LightspeedSDKCore {
           // Remove params for subsequent requests (pagination URLs already have them)
           delete requestOptions.params;
         }
-        // Debug log: print the URL being requested
-        console.log(
-          "[LightspeedSDK] getAllData requesting URL:",
-          requestOptions.url,
-          requestOptions.params
-        );
+
         const { data } = await this.executeApiRequest(requestOptions);
 
         // Handle successful empty responses
