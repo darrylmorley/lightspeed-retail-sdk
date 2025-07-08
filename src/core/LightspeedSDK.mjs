@@ -216,7 +216,7 @@ export class LightspeedSDKCore {
   // Token management
   async getToken() {
     const now = new Date();
-    const bufferTime = 1 * 60 * 1000; // 1 minute buffer
+    const bufferTime = 5 * 60 * 1000; // 5 minute buffer
 
     const storedTokens = await this.tokenStorage.getTokens();
 
