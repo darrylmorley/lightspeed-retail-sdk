@@ -303,8 +303,6 @@ export class LightspeedSDKCore {
       delete options.params; // Don't let axios try to re-encode
     }
 
-    console.log("[LightspeedSDK] Final request URL:", options.url);
-
     try {
       const res = await axios(options);
       this.lastResponse = res;
