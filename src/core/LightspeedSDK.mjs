@@ -1,3 +1,9 @@
+import axios from "axios";
+
+const operationUnits = { GET: 1, POST: 10, PUT: 10 };
+const getRequestUnits = (operation) => operationUnits[operation] || 10;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Centralized query param builder for all API endpoints.
  * Accepts params as object, string, or array. Handles relations/load_relations, custom params, and avoids double-encoding.
@@ -42,24 +48,21 @@ export function buildQueryParams(params) {
     } else if (key === "timeStamp") {
       // Encode as timeStamp=>,{timestamp}, NOT encoded
       qp.push(`timeStamp=>,${value}`);
-    } else if (typeof value === "object" && !Array.isArray(value)) {
-      for (const [subkey, subval] of Object.entries(value)) {
-        if (subval !== undefined && subval !== null) {
-          qp.push(`${key}[${subkey}]=${subval}`);
-        }
-      }
     } else {
-      qp.push(`${key}=${value}`);
+      // Special handling for operator-comma pattern (e.g., <,5)
+      if (typeof value === "string" && /^[<>]=?,/.test(value)) {
+        const idx = value.indexOf(",");
+        const op = value.slice(0, idx + 1); // operator and comma
+        const rest = value.slice(idx + 1);
+        qp.push(`${key}=${encodeURIComponent(op)}${rest}`);
+      } else {
+        qp.push(`${key}=${encodeURIComponent(value)}`);
+      }
     }
   }
   const result = qp.join("&");
   return result;
 }
-import axios from "axios";
-
-const operationUnits = { GET: 1, POST: 10, PUT: 10 };
-const getRequestUnits = (operation) => operationUnits[operation] || 10;
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Email notification helper
 async function sendTokenRefreshFailureEmail(error, accountID) {
@@ -300,6 +303,8 @@ export class LightspeedSDKCore {
       delete options.params; // Don't let axios try to re-encode
     }
 
+    console.log("[LightspeedSDK] Final request URL:", options.url);
+
     try {
       const res = await axios(options);
       this.lastResponse = res;
@@ -370,9 +375,23 @@ export class LightspeedSDKCore {
   // Paginated data fetching
   async getAllData(options) {
     let allData = [];
+    const limit = options.params?.limit;
+    let firstRequest = true;
     try {
       while (options.url) {
-        const { data } = await this.executeApiRequest(options);
+        // Clone options for each request
+        const requestOptions = { ...options };
+        if (!firstRequest) {
+          // Remove params for subsequent requests (pagination URLs already have them)
+          delete requestOptions.params;
+        }
+        // Debug log: print the URL being requested
+        console.log(
+          "[LightspeedSDK] getAllData requesting URL:",
+          requestOptions.url,
+          requestOptions.params
+        );
+        const { data } = await this.executeApiRequest(requestOptions);
 
         // Handle successful empty responses
         if (!data || Object.keys(data).length === 0) {
@@ -402,17 +421,38 @@ export class LightspeedSDKCore {
           if (selectedData.length === 0) {
             break;
           }
-          allData = allData.concat(selectedData);
+          // If limit is set, only add up to the remaining needed
+          if (limit !== undefined) {
+            const remaining = limit - allData.length;
+            if (remaining <= 0) {
+              break;
+            }
+            allData = allData.concat(selectedData.slice(0, remaining));
+            if (allData.length >= limit) {
+              break;
+            }
+          } else {
+            allData = allData.concat(selectedData);
+          }
         } else {
           // Single item, wrap in array
           allData.push(selectedData);
         }
 
+        // If limit is set and reached, break
+        if (limit !== undefined && allData.length >= limit) {
+          break;
+        }
+
+        firstRequest = false;
         options.url = next;
       }
     } catch (error) {
-      // Silent error handling for empty responses - just return empty array
       return [];
+    }
+    // If limit is set, return only up to limit
+    if (limit !== undefined) {
+      return allData.slice(0, limit);
     }
     return allData;
   }

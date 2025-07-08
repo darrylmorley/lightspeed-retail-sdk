@@ -1,6 +1,6 @@
 {
   "name": "lightspeed-retail-sdk",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "type": "module",
   "main": "dist/index.cjs",
@@ -17,6 +17,7 @@
   },
   "scripts": {
     "test": "node tests/test.js",
+    "test:mocha": "mocha tests/test-endpoints.mjs",
     "test:cjs": "node tests/test-cjs.cjs",
     "test:storage": "node tests/test-storage.mjs",
     "test:sqlite": "node tests/test-db-storage-sqlite.js",
@@ -69,6 +70,7 @@
   ],
   "devDependencies": {
     "@swc/cli": "^0.7.7",
-    "@swc/core": "^1.12.9"
+    "@swc/core": "^1.12.9",
+    "mocha": "^11.7.1"
   }
 }
