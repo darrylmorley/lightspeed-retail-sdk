@@ -320,6 +320,97 @@ export class LightspeedSDKCore {
     }
   }
 
+  // Core API request handler
+  async executeApiRequest(options, retries = 0) {
+    await this.handleRateLimit(options);
+
+    const token = await this.getToken();
+    if (!token) throw new Error("Error Fetching Token");
+
+    options.headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...options.headers,
+    };
+
+    // Centralized query param handling
+    if (options.params) {
+      const queryString = buildQueryParams(options.params);
+      if (queryString) {
+        // Remove any trailing ? or & from url
+        options.url = options.url.replace(/[?&]+$/, "");
+        options.url += (options.url.includes("?") ? "&" : "?") + queryString;
+      }
+      delete options.params; // Don't let axios try to re-encode
+    }
+
+    try {
+      const res = await axios(options);
+      this.lastResponse = res;
+
+      if (options.method === "GET") {
+        // Handle successful response with no data or empty data
+        if (!res.data || Object.keys(res.data).length === 0) {
+          return {
+            data: {},
+            next: null,
+            previous: null,
+          };
+        }
+
+        // Check if response has the expected structure but with empty arrays
+        const dataKeys = Object.keys(res.data).filter(
+          (key) => key !== "@attributes"
+        );
+        if (dataKeys.length > 0) {
+          const firstDataKey = dataKeys[0];
+          const firstDataValue = res.data[firstDataKey];
+
+          // No need to log for empty arrays - this is normal
+        }
+
+        // Handle successful response with data
+        return {
+          data: res.data,
+          next: res.data["@attributes"]?.next,
+          previous: res.data["@attributes"]?.prev,
+        };
+      } else {
+        return res.data;
+      }
+    } catch (err) {
+      // Handle 401 auth errors with automatic retry
+      if (err.response?.status === 401 && !options._authRetryAttempted) {
+        console.log("🔄 401 error - forcing token refresh and retrying...");
+
+        options._authRetryAttempted = true;
+        this.token = null;
+
+        try {
+          await this.refreshTokens();
+          return this.executeApiRequest(options, retries);
+        } catch (refreshError) {
+          console.error("Failed to refresh tokens:", refreshError.message);
+          throw refreshError;
+        }
+      }
+
+      // Handle retryable errors
+      if (this.isRetryableError(err) && retries < this.maxRetries) {
+        this.handleError(
+          `Network Error Retrying in 2 seconds...`,
+          err.message,
+          false
+        );
+        await sleep(2000);
+        return this.executeApiRequest(options, retries + 1);
+      } else {
+        // Simple error handling - let the calling method decide how to handle it
+        throw err;
+      }
+    }
+  }
+
   // Paginated data fetching
   async getAllData(options) {
     let allData = [];
