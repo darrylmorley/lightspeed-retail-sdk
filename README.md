@@ -2,9 +2,9 @@
 
 A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.3.3** — increase token buffer time from 1 minute to 5 minutes for improved token management
+**Current Version: 3.3.4** — improve error checking on token refresh to prevent false email warnings.
 
-## **🆕 Recent Updates (v3.3.3)**
+## **🆕 Recent Updates (v3.3.4)**
 
 - **Add centralized query param builder for API requests**: Add centralized query param builder for API requests. Supports input as object, string, or array, and manages relations/load_relations. Ensures no double-encoding of parameters and handles special cases for 'or' and 'timeStamp'.
 - **🎯 Enhanced Parameter Support**: All main getter methods now support both legacy and new object-based parameters with full backward compatibility
@@ -66,7 +66,7 @@ const items = await sdk.getItems({
 ## Table of Contents
 
 - [Another Unofficial Lightspeed Retail V3 API SDK](#another-unofficial-lightspeed-retail-v3-api-sdk)
-  - [**🆕 Recent Updates (v3.3.3)**](#-recent-updates-v333)
+  - [**🆕 Recent Updates (v3.3.4)**](#-recent-updates-v334)
   - [🚀 Key Features](#-key-features)
   - [🔄 Migrating from 3.1.x](#-migrating-from-31x)
     - [Backward Compatibility](#backward-compatibility)

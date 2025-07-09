@@ -144,6 +144,7 @@ export class LightspeedSDKCore {
     this.lastResponse = null;
     this.token = null;
     this.tokenExpiry = null;
+    this.refreshInProgress = false;
 
     // Token storage interface - defaults to in-memory if not provided
     this.tokenStorage = tokenStorage || new InMemoryTokenStorage();
@@ -216,10 +217,11 @@ export class LightspeedSDKCore {
   // Token management
   async getToken() {
     const now = new Date();
-    const bufferTime = 5 * 60 * 1000; // 5 minute buffer
+    const bufferTime = 5 * 60 * 1000; // 5-minute buffer
 
     const storedTokens = await this.tokenStorage.getTokens();
 
+    // Check if the token is still valid
     if (storedTokens.access_token && storedTokens.expires_at) {
       const expiryTime = new Date(storedTokens.expires_at);
       if (expiryTime.getTime() - now.getTime() > bufferTime) {
@@ -228,20 +230,40 @@ export class LightspeedSDKCore {
       }
     }
 
-    const refreshToken = storedTokens.refresh_token || this.refreshToken;
-
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
+    // Prevent concurrent refresh attempts
+    if (this.refreshInProgress) {
+      console.log("🔄 Token refresh already in progress. Waiting...");
+      while (this.refreshInProgress) {
+        await sleep(100); // Wait for the ongoing refresh to complete
+      }
+      // After waiting, check if the token is now valid
+      const updatedTokens = await this.tokenStorage.getTokens();
+      if (updatedTokens.access_token && updatedTokens.expires_at) {
+        const expiryTime = new Date(updatedTokens.expires_at);
+        if (expiryTime.getTime() - now.getTime() > bufferTime) {
+          this.token = updatedTokens.access_token;
+          return this.token;
+        }
+      }
+      // If still invalid, proceed to refresh
     }
 
-    const body = {
-      grant_type: "refresh_token",
-      client_id: this.clientID,
-      client_secret: this.clientSecret,
-      refresh_token: refreshToken,
-    };
+    this.refreshInProgress = true; // Lock the refresh process
 
     try {
+      const refreshToken = storedTokens.refresh_token || this.refreshToken;
+
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      const body = {
+        grant_type: "refresh_token",
+        client_id: this.clientID,
+        client_secret: this.clientSecret,
+        refresh_token: refreshToken,
+      };
+
       const response = await axios({
         url: this.tokenUrl,
         method: "post",
@@ -252,6 +274,7 @@ export class LightspeedSDKCore {
       const tokenData = response.data;
       const expiresAt = new Date(now.getTime() + tokenData.expires_in * 1000);
 
+      // Save the new tokens
       await this.tokenStorage.setTokens({
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
@@ -262,8 +285,24 @@ export class LightspeedSDKCore {
       this.token = tokenData.access_token;
       this.tokenExpiry = expiresAt;
 
+      console.log("✅ Token refresh successful");
       return this.token;
     } catch (error) {
+      console.error("❌ Token refresh failed:", error.message);
+
+      // Check if the token was refreshed by another process
+      const updatedTokens = await this.tokenStorage.getTokens();
+      if (updatedTokens.access_token && updatedTokens.expires_at) {
+        const expiryTime = new Date(updatedTokens.expires_at);
+        if (expiryTime.getTime() - now.getTime() > bufferTime) {
+          console.log(
+            "🔄 Token was refreshed by another process. Skipping failure email."
+          );
+          return updatedTokens.access_token;
+        }
+      }
+
+      // If the token is still invalid, send the failure email
       const helpMsg =
         "\n❌ Token refresh failed. Your refresh token may be expired or revoked.\n" +
         "👉 Please re-authenticate using the SDK's CLI or obtain a new refresh token.\n" +
@@ -276,97 +315,8 @@ export class LightspeedSDKCore {
       await sendTokenRefreshFailureEmail(error, this.accountID);
 
       throw new Error(helpMsg);
-    }
-  }
-
-  // Core API request handler
-  async executeApiRequest(options, retries = 0) {
-    await this.handleRateLimit(options);
-
-    const token = await this.getToken();
-    if (!token) throw new Error("Error Fetching Token");
-
-    options.headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...options.headers,
-    };
-
-    // Centralized query param handling
-    if (options.params) {
-      const queryString = buildQueryParams(options.params);
-      if (queryString) {
-        // Remove any trailing ? or & from url
-        options.url = options.url.replace(/[?&]+$/, "");
-        options.url += (options.url.includes("?") ? "&" : "?") + queryString;
-      }
-      delete options.params; // Don't let axios try to re-encode
-    }
-
-    try {
-      const res = await axios(options);
-      this.lastResponse = res;
-
-      if (options.method === "GET") {
-        // Handle successful response with no data or empty data
-        if (!res.data || Object.keys(res.data).length === 0) {
-          return {
-            data: {},
-            next: null,
-            previous: null,
-          };
-        }
-
-        // Check if response has the expected structure but with empty arrays
-        const dataKeys = Object.keys(res.data).filter(
-          (key) => key !== "@attributes"
-        );
-        if (dataKeys.length > 0) {
-          const firstDataKey = dataKeys[0];
-          const firstDataValue = res.data[firstDataKey];
-
-          // No need to log for empty arrays - this is normal
-        }
-
-        // Handle successful response with data
-        return {
-          data: res.data,
-          next: res.data["@attributes"]?.next,
-          previous: res.data["@attributes"]?.prev,
-        };
-      } else {
-        return res.data;
-      }
-    } catch (err) {
-      // Handle 401 auth errors with automatic retry
-      if (err.response?.status === 401 && !options._authRetryAttempted) {
-        console.log("🔄 401 error - forcing token refresh and retrying...");
-
-        options._authRetryAttempted = true;
-        this.token = null;
-
-        try {
-          await this.refreshTokens();
-          return this.executeApiRequest(options, retries);
-        } catch (refreshError) {
-          console.error("Failed to refresh tokens:", refreshError.message);
-          throw refreshError;
-        }
-      }
-
-      // Handle retryable errors
-      if (this.isRetryableError(err) && retries < this.maxRetries) {
-        this.handleError(
-          `Network Error Retrying in 2 seconds...`,
-          err.message,
-          false
-        );
-        await sleep(2000);
-        return this.executeApiRequest(options, retries + 1);
-      } else {
-        // Simple error handling - let the calling method decide how to handle it
-        throw err;
-      }
+    } finally {
+      this.refreshInProgress = false; // Release the lock
     }
   }
 
