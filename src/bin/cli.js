@@ -423,6 +423,61 @@ program
   });
 
 program
+  .command("inject-tokens")
+  .description("Manually store an access & refresh token in chosen backend")
+  .option("--access <accessToken>", "Access token (required)")
+  .option("--refresh <refreshToken>", "Refresh token (required)")
+  .option(
+    "--expires-at <isoDatetime>",
+    "ISO8601 expiry (e.g. 2025-01-01T12:34:56.000Z). Overrides --expires-in."
+  )
+  .option(
+    "--expires-in <seconds>",
+    "Seconds until expiry (default 3600 if neither --expires-at nor --expires-in provided)"
+  )
+  .action(async (opts) => {
+    let storageBackend = null;
+    try {
+      if (!opts.access || !opts.refresh) {
+        console.error("❌ --access and --refresh are required");
+        process.exit(1);
+      }
+
+      storageBackend = await selectStorageBackend();
+
+      let expiresAt;
+      if (opts.expiresAt) {
+        const d = new Date(opts.expiresAt);
+        if (isNaN(d.getTime())) {
+          console.error("❌ Invalid --expires-at value");
+          process.exit(1);
+        }
+        expiresAt = d.toISOString();
+      } else {
+        const seconds = parseInt(
+          opts.expiresIn || process.env.LIGHTSPEED_EXPIRES_IN || "3600",
+          10
+        );
+        expiresAt = new Date(Date.now() + seconds * 1000).toISOString();
+      }
+
+      await storageBackend.setTokens({
+        access_token: opts.access,
+        refresh_token: opts.refresh,
+        expires_at: expiresAt,
+      });
+
+      console.log("✅ Tokens injected successfully");
+      console.log("   Expires At:", expiresAt);
+    } catch (err) {
+      console.error("❌ Failed to inject tokens:", err.message);
+      process.exit(1);
+    } finally {
+      await cleanupStorageBackend(storageBackend);
+    }
+  });
+
+program
   .command("migrate-tokens")
   .description(
     "Copy tokens from one storage backend to another (file, encrypted file, or database)"
