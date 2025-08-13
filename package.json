@@ -13,8 +13,7 @@
     }
   },
   "bin": {
-    "lightspeed-retail-sdk": "dist/src/bin/cli.js",
-    "ls": "dist/src/bin/cli.js"
+    "lightspeed-retail-sdk": "dist/src/bin/cli.js"
   },
   "scripts": {
     "test": "node tests/test.js",
