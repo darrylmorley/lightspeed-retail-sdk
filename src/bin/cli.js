@@ -330,6 +330,10 @@ program
               err.message
             );
           }
+          // Remove storage config file
+          const storageConfig = new StorageConfig();
+          await storageConfig.removeConfig();
+          console.log("🗑️  Storage configuration cleared");
           return;
         }
         case "postgres": {
@@ -365,6 +369,10 @@ program
               err.message
             );
           }
+          // Remove storage config file
+          const storageConfig = new StorageConfig();
+          await storageConfig.removeConfig();
+          console.log("🗑️  Storage configuration cleared");
           return;
         }
         case "mongodb": {
@@ -402,6 +410,10 @@ program
               err.message
             );
           }
+          // Remove storage config file
+          const storageConfig = new StorageConfig();
+          await storageConfig.removeConfig();
+          console.log("🗑️  Storage configuration cleared");
           return;
         }
         default:
@@ -439,6 +451,11 @@ program
       await fileStorage.setTokens({});
       console.log(`\n✅ Token file cleared: ${tokenFile}`);
     }
+    
+    // Remove storage config file
+    const storageConfig = new StorageConfig();
+    await storageConfig.removeConfig();
+    console.log("🗑️  Storage configuration cleared");
   });
 
 program
@@ -1104,6 +1121,16 @@ async function getStorageConfig(storage) {
 
 async function selectStorageBackend(saveConfig = true) {
   const storageConfig = new StorageConfig();
+  
+  // Try auto-discovery first if not saving config (read-only operations)
+  if (!saveConfig) {
+    const { autoDiscoverStorage } = await import("../storage/StorageConfig.mjs");
+    const autoStorage = await autoDiscoverStorage();
+    if (autoStorage) {
+      return autoStorage;
+    }
+  }
+  
   const storage = await selectStorageBackendInternal();
   
   // Save configuration for auto-discovery if requested
