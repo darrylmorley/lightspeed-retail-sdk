@@ -61,6 +61,10 @@ program
     "-b, --browser <browser>",
     "Specify browser to use (chrome, firefox, safari, edge, etc.)"
   )
+  .option(
+    "--no-browser",
+    "Skip browser opening and display URL for manual access (useful in production/headless environments)"
+  )
   .action(async (options) => {
     let storageBackend = null;
     try {
@@ -89,70 +93,83 @@ program
         clientID
       )}&scope=${encodeURIComponent(scopes)}`;
 
-      console.log("\nOpening browser for authentication...");
+      // Detect if we're in a headless/production environment
+      const isHeadless = !process.env.DISPLAY && !process.env.SSH_CLIENT && process.platform !== 'darwin' && process.platform !== 'win32';
+      const skipBrowser = options.noBrowser || isHeadless;
 
-      // Open browser with optional browser specification
-      const openOptions = {};
-      if (options.browser) {
-        openOptions.app = { name: options.browser };
-        console.log(`Using browser: ${options.browser}`);
+      if (skipBrowser) {
+        console.log("\n🔗 OAuth Authentication Required");
+        console.log("\nPlease open the following URL in your browser to authorize the application:");
+        console.log(`\n${authUrl}\n`);
+        console.log("After authorizing, you will be redirected to your configured redirect URI");
+        console.log("with an authorization code in the URL (e.g., ?code=abc123...)");
       } else {
-        // Ask user if they want to choose a specific browser
-        const { chooseBrowser } = await inquirer.prompt([
-          {
-            type: "confirm",
-            name: "chooseBrowser",
-            message: "Do you want to choose a specific browser?",
-            default: false,
-          },
-        ]);
+        console.log("\nOpening browser for authentication...");
 
-        if (chooseBrowser) {
-          const { browserChoice } = await inquirer.prompt([
+        // Open browser with optional browser specification
+        const openOptions = {};
+        if (options.browser) {
+          openOptions.app = { name: options.browser };
+          console.log(`Using browser: ${options.browser}`);
+        } else {
+          // Ask user if they want to choose a specific browser
+          const { chooseBrowser } = await inquirer.prompt([
             {
-              type: "list",
-              name: "browserChoice",
-              message: "Select browser:",
-              choices: [
-                { name: "Default browser", value: null },
-                { name: "Google Chrome", value: "google chrome" },
-                { name: "Firefox", value: "firefox" },
-                { name: "Safari", value: "safari" },
-                { name: "Microsoft Edge", value: "microsoft edge" },
-                { name: "Brave", value: "brave" },
-                { name: "Opera", value: "opera" },
-                { name: "Custom browser name", value: "custom" },
-              ],
+              type: "confirm",
+              name: "chooseBrowser",
+              message: "Do you want to choose a specific browser?",
+              default: false,
             },
           ]);
 
-          if (browserChoice === "custom") {
-            const { customBrowser } = await inquirer.prompt([
+          if (chooseBrowser) {
+            const { browserChoice } = await inquirer.prompt([
               {
-                type: "input",
-                name: "customBrowser",
-                message: "Enter browser name:",
-                validate: (input) =>
-                  input.trim() !== "" || "Browser name cannot be empty",
+                type: "list",
+                name: "browserChoice",
+                message: "Select browser:",
+                choices: [
+                  { name: "Default browser", value: null },
+                  { name: "Google Chrome", value: "google chrome" },
+                  { name: "Firefox", value: "firefox" },
+                  { name: "Safari", value: "safari" },
+                  { name: "Microsoft Edge", value: "microsoft edge" },
+                  { name: "Brave", value: "brave" },
+                  { name: "Opera", value: "opera" },
+                  { name: "Custom browser name", value: "custom" },
+                ],
               },
             ]);
-            openOptions.app = { name: customBrowser };
-            console.log(`Using browser: ${customBrowser}`);
-          } else if (browserChoice) {
-            openOptions.app = { name: browserChoice };
-            console.log(`Using browser: ${browserChoice}`);
+
+            if (browserChoice === "custom") {
+              const { customBrowser } = await inquirer.prompt([
+                {
+                  type: "input",
+                  name: "customBrowser",
+                  message: "Enter browser name:",
+                  validate: (input) =>
+                    input.trim() !== "" || "Browser name cannot be empty",
+                },
+              ]);
+              openOptions.app = { name: customBrowser };
+              console.log(`Using browser: ${customBrowser}`);
+            } else if (browserChoice) {
+              openOptions.app = { name: browserChoice };
+              console.log(`Using browser: ${browserChoice}`);
+            }
           }
         }
-      }
 
-      try {
-        await open(authUrl, openOptions);
-      } catch (err) {
-        console.log(
-          `\n⚠️  Could not open browser automatically: ${err.message}`
-        );
-        console.log(`\nPlease manually open this URL in your browser:`);
-        console.log(authUrl);
+        try {
+          await open(authUrl, openOptions);
+          console.log(`\nIf the browser didn't open, manually visit: ${authUrl}`);
+        } catch (err) {
+          console.log(
+            `\n⚠️  Could not open browser automatically: ${err.message}`
+          );
+          console.log(`\nPlease manually open this URL in your browser:`);
+          console.log(`\n${authUrl}\n`);
+        }
       }
 
       // 3. Prompt for code
@@ -425,8 +442,8 @@ program
 program
   .command("inject-tokens")
   .description("Manually store an access & refresh token in chosen backend")
-  .option("--access <accessToken>", "Access token (required)")
-  .option("--refresh <refreshToken>", "Refresh token (required)")
+  .option("--access <accessToken>", "Access token (skip interactive prompt)")
+  .option("--refresh <refreshToken>", "Refresh token (skip interactive prompt)")
   .option(
     "--expires-at <isoDatetime>",
     "ISO8601 expiry (e.g. 2025-01-01T12:34:56.000Z). Overrides --expires-in."
@@ -438,13 +455,33 @@ program
   .action(async (opts) => {
     let storageBackend = null;
     try {
-      if (!opts.access || !opts.refresh) {
-        console.error("❌ --access and --refresh are required");
-        process.exit(1);
+      console.log("\n🔑 Manual Token Injection\n");
+      console.log("This command allows you to manually store access and refresh tokens");
+      console.log("that you've obtained through other means (e.g., Lightspeed dashboard).\n");
+
+      // Get tokens either from command line options or interactive prompts
+      let accessToken = opts.access;
+      let refreshToken = opts.refresh;
+
+      if (!accessToken) {
+        accessToken = await prompt("Enter your access token: ");
+        if (!accessToken || accessToken.trim() === "") {
+          console.error("❌ Access token is required");
+          process.exit(1);
+        }
+        accessToken = accessToken.trim();
       }
 
-      storageBackend = await selectStorageBackend();
+      if (!refreshToken) {
+        refreshToken = await prompt("Enter your refresh token: ");
+        if (!refreshToken || refreshToken.trim() === "") {
+          console.error("❌ Refresh token is required");
+          process.exit(1);
+        }
+        refreshToken = refreshToken.trim();
+      }
 
+      // Get expiry information
       let expiresAt;
       if (opts.expiresAt) {
         const d = new Date(opts.expiresAt);
@@ -453,22 +490,94 @@ program
           process.exit(1);
         }
         expiresAt = d.toISOString();
-      } else {
-        const seconds = parseInt(
-          opts.expiresIn || process.env.LIGHTSPEED_EXPIRES_IN || "3600",
-          10
-        );
+      } else if (opts.expiresIn) {
+        const seconds = parseInt(opts.expiresIn, 10);
+        if (isNaN(seconds) || seconds <= 0) {
+          console.error("❌ Invalid --expires-in value");
+          process.exit(1);
+        }
         expiresAt = new Date(Date.now() + seconds * 1000).toISOString();
+      } else {
+        // Interactive prompt for expiry
+        const expiryChoice = await inquirer.prompt([
+          {
+            type: "list",
+            name: "expiryMethod",
+            message: "How would you like to set the token expiry?",
+            choices: [
+              { name: "Default (1 hour from now)", value: "default" },
+              { name: "Specific date/time (ISO format)", value: "datetime" },
+              { name: "Seconds from now", value: "seconds" },
+            ],
+            default: "default",
+          },
+        ]);
+
+        switch (expiryChoice.expiryMethod) {
+          case "default":
+            expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+            break;
+          case "datetime":
+            const { customDateTime } = await inquirer.prompt([
+              {
+                type: "input",
+                name: "customDateTime",
+                message: "Enter expiry date/time (ISO format, e.g., 2025-01-01T12:34:56.000Z):",
+                validate: (input) => {
+                  const d = new Date(input);
+                  return !isNaN(d.getTime()) || "Please enter a valid ISO datetime";
+                },
+              },
+            ]);
+            expiresAt = new Date(customDateTime).toISOString();
+            break;
+          case "seconds":
+            const { customSeconds } = await inquirer.prompt([
+              {
+                type: "input",
+                name: "customSeconds",
+                message: "Enter seconds until expiry:",
+                default: "3600",
+                validate: (input) => {
+                  const num = parseInt(input, 10);
+                  return (!isNaN(num) && num > 0) || "Please enter a positive number";
+                },
+              },
+            ]);
+            expiresAt = new Date(Date.now() + parseInt(customSeconds, 10) * 1000).toISOString();
+            break;
+        }
+      }
+
+      console.log("\n📁 Token Storage Configuration");
+      storageBackend = await selectStorageBackend();
+
+      // Validate tokens format (basic check)
+      if (accessToken.length < 10) {
+        console.warn("⚠️  Warning: Access token seems unusually short");
+      }
+      if (refreshToken.length < 10) {
+        console.warn("⚠️  Warning: Refresh token seems unusually short");
       }
 
       await storageBackend.setTokens({
-        access_token: opts.access,
-        refresh_token: opts.refresh,
+        access_token: accessToken,
+        refresh_token: refreshToken,
         expires_at: expiresAt,
+        expires_in: Math.floor((new Date(expiresAt) - new Date()) / 1000),
       });
 
-      console.log("✅ Tokens injected successfully");
-      console.log("   Expires At:", expiresAt);
+      console.log("\n✅ Tokens injected successfully!");
+      console.log("📋 Token Details:");
+      console.log(`   Access Token: ${accessToken.substring(0, 20)}...`);
+      console.log(`   Refresh Token: ${refreshToken.substring(0, 20)}...`);
+      console.log(`   Expires At: ${expiresAt}`);
+      
+      const minutesUntilExpiry = Math.floor((new Date(expiresAt) - new Date()) / 60000);
+      console.log(`   Time Until Expiry: ${minutesUntilExpiry} minutes`);
+
+      console.log("\n💡 You can now use the SDK with these tokens.");
+      console.log("   Test with: npm run cli whoami");
     } catch (err) {
       console.error("❌ Failed to inject tokens:", err.message);
       process.exit(1);

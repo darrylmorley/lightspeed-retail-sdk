@@ -2,9 +2,16 @@
 
 A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.3.5** — improve error checking on token refresh to prevent false email warnings.
+**Current Version: 3.4.0** — Enhanced CLI with interactive token injection and production environment support.
 
-## **🆕 Recent Updates (v3.3.5)**
+## **🆕 Recent Updates (v3.4.0)**
+
+- **🔧 Enhanced Token Injection**: Interactive `inject-tokens` command with prompts for access/refresh tokens, expiry settings, and storage backend selection
+- **🏭 Production Environment Support**: Login command now supports headless environments with `--no-browser` option and automatic detection
+- **💡 Improved CLI UX**: Better error messages, token validation, and clear instructions for manual OAuth flows
+- **📖 Enhanced Documentation**: Updated README and CLI help with production deployment guidance
+
+## **Previous Updates (v3.3.5)**
 
 - **Add centralized query param builder for API requests**: Add centralized query param builder for API requests. Supports input as object, string, or array, and manages relations/load_relations. Ensures no double-encoding of parameters and handles special cases for 'or' and 'timeStamp'.
 - **🎯 Enhanced Parameter Support**: All main getter methods now support both legacy and new object-based parameters with full backward compatibility
@@ -107,6 +114,8 @@ const items = await sdk.getItems({
       - [Alternative: Local Installation](#alternative-local-installation)
     - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
     - [Manual Token Management (Advanced)](#manual-token-management-advanced)
+      - [Option 1: Interactive Token Injection (Easiest)](#option-1-interactive-token-injection-easiest)
+      - [Option 2: Programmatic Token Storage](#option-2-programmatic-token-storage)
       - [File-Based Storage](#file-based-storage)
       - [Encrypted Storage (Recommended)](#encrypted-storage-recommended)
   - [Database Storage (PostgreSQL, SQLite, and MongoDB)](#database-storage-postgresql-sqlite-and-mongodb)
@@ -197,6 +206,9 @@ lightspeed-retail-sdk login --browser firefox
 lightspeed-retail-sdk login --browser "google chrome"
 lightspeed-retail-sdk login --browser safari
 
+# Production/headless environment - display URL without opening browser
+lightspeed-retail-sdk login --no-browser
+
 # Check current token status
 lightspeed-retail-sdk token-status
 
@@ -205,6 +217,12 @@ lightspeed-retail-sdk refresh-token
 
 # View your account information
 lightspeed-retail-sdk whoami
+
+# Manually inject access and refresh tokens (interactive)
+lightspeed-retail-sdk inject-tokens
+
+# Manually inject tokens with command-line options
+lightspeed-retail-sdk inject-tokens --access "your_access_token" --refresh "your_refresh_token"
 ```
 
 #### Storage Management
@@ -249,10 +267,11 @@ lightspeed-retail-sdk login
 The login process:
 
 1. Prompts for your Lightspeed credentials (if not in environment)
-2. Optionally lets you choose a specific browser
-3. Opens browser for OAuth authorization
-4. Automatically exchanges code for tokens
-5. Stores tokens in your chosen backend
+2. Optionally lets you choose a specific browser (or skips browser opening in production)
+3. Opens browser for OAuth authorization (or displays URL for manual access)
+4. Waits for you to paste the authorization code from the redirect URL
+5. Automatically exchanges code for tokens
+6. Stores tokens in your chosen backend
 
 **Note**: If no scopes are specified via environment variables or user input, the default scope `employee:all` will be used.
 
@@ -269,6 +288,22 @@ lightspeed-retail-sdk login --browser "google chrome"
 # Interactive browser selection (when no --browser flag is used)
 # The CLI will ask if you want to choose a specific browser
 ```
+
+**Production/Headless Environments:**
+
+```bash
+# Skip browser opening and display URL for manual access
+lightspeed-retail-sdk login --no-browser
+```
+
+This is useful when:
+
+- Running in Docker containers or cloud environments without GUI
+- SSH sessions without X11 forwarding
+- Automated deployment scripts
+- CI/CD pipelines
+
+The CLI will automatically detect headless environments and display the OAuth URL instead of trying to open a browser.
 
 #### Token Management
 
@@ -655,7 +690,28 @@ const api = new LightspeedRetailSDK({
 
 ### Manual Token Management (Advanced)
 
-If you prefer to handle authentication manually without the CLI:
+If you prefer to handle authentication manually without the CLI, you have several options:
+
+#### Option 1: Interactive Token Injection (Easiest)
+
+Use the CLI to manually input tokens you've obtained from elsewhere:
+
+```bash
+# Interactive prompts for tokens and storage configuration
+lightspeed-retail-sdk inject-tokens
+
+# Or specify tokens via command line and use interactive prompts for storage
+lightspeed-retail-sdk inject-tokens --access "your_access_token" --refresh "your_refresh_token"
+```
+
+This method will:
+
+- Prompt you to enter access and refresh tokens
+- Let you choose expiry settings (default 1 hour, custom date, or seconds)
+- Allow you to select your storage backend (file, encrypted file, or database)
+- Store the tokens securely in your chosen backend
+
+#### Option 2: Programmatic Token Storage
 
 #### File-Based Storage
 

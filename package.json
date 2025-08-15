@@ -1,6 +1,6 @@
 {
   "name": "lightspeed-retail-sdk",
-  "version": "3.3.5",
+  "version": "3.4.0",
   "description": "Another unofficial Lightspeed Retail API SDK for Node.js",
   "type": "module",
   "main": "dist/index.cjs",
