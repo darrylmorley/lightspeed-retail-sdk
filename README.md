@@ -2,14 +2,16 @@
 
 A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK provides a convenient, secure, and flexible way to access Lightspeed Retail's features—including customer, item, and order management.
 
-**Current Version: 3.4.0** — Enhanced CLI with interactive token injection and production environment support.
+**Current Version: 3.4.1** — Auto-discovery system for seamless cron job and production deployment.
 
 ## **🆕 Recent Updates (v3.4.0)**
 
-- **🔧 Enhanced Token Injection**: Interactive `inject-tokens` command with prompts for access/refresh tokens, expiry settings, and storage backend selection
-- **🏭 Production Environment Support**: Login command now supports headless environments with `--no-browser` option and automatic detection
+- **🤖 Auto-Discovery System**: SDK automatically discovers storage configuration after CLI setup - perfect for cron jobs and automated scripts
+- **🔧 Enhanced Token Injection**: Interactive `inject-tokens` command with prompts for access/refresh tokens, expiry settings, and storage backend selection  
+- **🏭 Production Environment Support**: Login command supports headless environments with `--no-browser` option
+- **📁 Storage Configuration Management**: Automatic saving and updating of storage configurations during CLI operations
+- **🔄 Migration Transparency**: Storage migrations automatically update all scripts to use new storage
 - **💡 Improved CLI UX**: Better error messages, token validation, and clear instructions for manual OAuth flows
-- **📖 Enhanced Documentation**: Updated README and CLI help with production deployment guidance
 
 ## **Previous Updates (v3.3.5)**
 
@@ -27,12 +29,14 @@ A modern JavaScript SDK for interacting with the Lightspeed Retail API. This SDK
 
 ## 🚀 Key Features
 
-- **Modern API**: Object-based parameters with full backward compatibility
-- **Timestamp Filtering**: Get only records updated since a specific time
-- **Robust Error Handling**: Clean, silent error handling with consistent return types
-- **Enhanced CLI**: Browser selection, default scopes, and improved authentication
-- **Multiple Storage Options**: File, encrypted, database, and in-memory token storage
-- **Comprehensive Coverage**: 20+ API methods with consistent interfaces
+- **🤖 Auto-Discovery**: Zero-configuration after CLI setup - perfect for cron jobs and production
+- **🔄 Modern API**: Object-based parameters with full backward compatibility
+- **🕒 Timestamp Filtering**: Get only records updated since a specific time
+- **🛡️ Robust Error Handling**: Clean, silent error handling with consistent return types
+- **🎯 Enhanced CLI**: Interactive setup with storage selection and headless support
+- **🔒 Multiple Storage Options**: File, encrypted, database, and in-memory token storage
+- **📊 Comprehensive Coverage**: 20+ API methods with consistent interfaces
+- **⚡ Seamless Token Management**: Automatic token refresh with failure notifications
 
 ## 🔄 Migrating from 3.1.x
 
@@ -73,7 +77,8 @@ const items = await sdk.getItems({
 ## Table of Contents
 
 - [Another Unofficial Lightspeed Retail V3 API SDK](#another-unofficial-lightspeed-retail-v3-api-sdk)
-  - [**🆕 Recent Updates (v3.3.5)**](#-recent-updates-v335)
+  - [**🆕 Recent Updates (v3.4.0)**](#-recent-updates-v340)
+  - [**Previous Updates (v3.3.5)**](#previous-updates-v335)
   - [🚀 Key Features](#-key-features)
   - [🔄 Migrating from 3.1.x](#-migrating-from-31x)
     - [Backward Compatibility](#backward-compatibility)
@@ -112,7 +117,9 @@ const items = await sdk.getItems({
   - [Quick Start](#quick-start)
     - [Modern CLI-First Approach (Recommended)](#modern-cli-first-approach-recommended)
       - [Alternative: Local Installation](#alternative-local-installation)
-    - [Basic Usage (In-Memory Storage)](#basic-usage-in-memory-storage)
+    - [Recommended Usage (Auto-Discovery)](#recommended-usage-auto-discovery)
+    - [Explicit Storage (Advanced)](#explicit-storage-advanced)
+    - [Production \& Cron Job Setup](#production--cron-job-setup)
     - [Manual Token Management (Advanced)](#manual-token-management-advanced)
       - [Option 1: Interactive Token Injection (Easiest)](#option-1-interactive-token-injection-easiest)
       - [Option 2: Programmatic Token Storage](#option-2-programmatic-token-storage)
@@ -643,50 +650,94 @@ npx lightspeed-retail-sdk login
 Then in your code:
 
 ```javascript
-import LightspeedRetailSDK, {
-  FileTokenStorage,
-  EncryptedTokenStorage,
-} from "lightspeed-retail-sdk";
-import dotenv from "dotenv";
-dotenv.config();
+import LightspeedRetailSDK from "lightspeed-retail-sdk";
 
-// Use the same storage configuration as your CLI
-const fileStorage = new FileTokenStorage(
-  process.env.LIGHTSPEED_TOKEN_FILE || "./tokens/encrypted-tokens.json"
-);
-const tokenStorage = process.env.LIGHTSPEED_ENCRYPTION_KEY
-  ? new EncryptedTokenStorage(
-      fileStorage,
-      process.env.LIGHTSPEED_ENCRYPTION_KEY
-    )
-  : fileStorage;
-
+// After CLI setup, your code is this simple:
 const api = new LightspeedRetailSDK({
-  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
   clientID: process.env.LIGHTSPEED_CLIENT_ID,
   clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
-  tokenStorage,
+  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+  // Storage automatically discovered from CLI setup!
 });
 
-// The SDK will automatically use stored tokens and refresh as needed
+// The SDK automatically finds your tokens and refreshes them as needed
+const items = await api.getItems();
 export default api;
 ```
 
-### Basic Usage (In-Memory Storage)
+### Recommended Usage (Auto-Discovery)
+
+**Best for most users**: After one-time CLI setup, no configuration needed:
 
 ```javascript
 import LightspeedRetailSDK from "lightspeed-retail-sdk";
 
+// After running: npm run cli login (one time setup)
 const api = new LightspeedRetailSDK({
-  accountID: "Your Account No.",
-  clientID: "Your client ID.",
-  clientSecret: "Your client secret.",
-  refreshToken: "Your initial refresh token.",
-  // No tokenStorage = uses InMemoryTokenStorage by default
+  clientID: process.env.LIGHTSPEED_CLIENT_ID,
+  clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
+  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+  // No tokenStorage needed - automatically discovered!
+});
+
+// Works immediately, handles token refresh automatically
+const items = await api.getItems();
+```
+
+### Explicit Storage (Advanced)
+
+For advanced use cases where you want to specify storage manually:
+
+```javascript
+import LightspeedRetailSDK, { 
+  FileTokenStorage, 
+  EncryptedTokenStorage 
+} from "lightspeed-retail-sdk";
+
+const fileStorage = new FileTokenStorage('./lightspeed-tokens.json');
+const tokenStorage = process.env.LIGHTSPEED_ENCRYPTION_KEY
+  ? new EncryptedTokenStorage(fileStorage, process.env.LIGHTSPEED_ENCRYPTION_KEY)
+  : fileStorage;
+
+const api = new LightspeedRetailSDK({
+  clientID: process.env.LIGHTSPEED_CLIENT_ID,
+  clientSecret: process.env.LIGHTSPEED_CLIENT_SECRET,
+  accountID: process.env.LIGHTSPEED_ACCOUNT_ID,
+  tokenStorage: tokenStorage, // Explicit storage choice
 });
 ```
 
-⚠️ **Warning**: Basic usage stores tokens in memory only. Tokens will be lost on application restart, which may cause issues with Lightspeed's new token rotation system.
+✅ **Auto-Discovery**: The SDK automatically discovers your storage configuration after initial CLI setup. Perfect for cron jobs and automated scripts.
+
+✅ **Explicit Storage**: You can still explicitly provide tokenStorage for advanced use cases. Choose from FileTokenStorage, EncryptedTokenStorage (recommended), DatabaseTokenStorage, or InMemoryTokenStorage (not recommended).
+
+### Production & Cron Job Setup
+
+The auto-discovery system is perfect for production environments and automated scripts:
+
+1. **Initial Setup** (run once):
+
+   ```bash
+   # Interactive setup with storage selection
+   npm run cli login
+   
+   # Or for headless environments:
+   npm run cli login --no-browser
+   ```
+
+2. **Your Scripts Work Automatically**:
+   - Cron jobs find storage configuration automatically
+   - Token refresh happens seamlessly in background
+   - Storage migrations update all scripts automatically
+   - No configuration management needed
+
+3. **Environment Variables** (recommended):
+
+   ```bash
+   export LIGHTSPEED_CLIENT_ID="your-client-id"
+   export LIGHTSPEED_CLIENT_SECRET="your-client-secret"  
+   export LIGHTSPEED_ACCOUNT_ID="your-account-id"
+   ```
 
 ### Manual Token Management (Advanced)
 

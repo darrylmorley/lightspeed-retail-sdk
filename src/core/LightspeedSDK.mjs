@@ -146,8 +146,51 @@ export class LightspeedSDKCore {
     this.tokenExpiry = null;
     this.refreshInProgress = false;
 
-    // Token storage interface - defaults to in-memory if not provided
-    this.tokenStorage = tokenStorage || new InMemoryTokenStorage();
+    // Token storage interface - can be explicitly provided or auto-discovered
+    if (tokenStorage) {
+      this.tokenStorage = tokenStorage;
+    } else {
+      // Auto-discovery will be handled by async initialization
+      this.tokenStorage = null;
+      this._storageInitialized = false;
+    }
+  }
+
+  /**
+   * Initialize token storage through auto-discovery if not explicitly provided
+   * @private
+   */
+  async _initializeStorage() {
+    if (this._storageInitialized) {
+      return;
+    }
+
+    if (!this.tokenStorage) {
+      try {
+        const { autoDiscoverStorage } = await import("../storage/StorageConfig.mjs");
+        this.tokenStorage = await autoDiscoverStorage();
+        
+        if (!this.tokenStorage) {
+          throw new Error(
+            "No token storage found. Please either:\n" +
+            "• Run the CLI to set up storage: npm run cli login\n" +
+            "• Or explicitly provide tokenStorage:\n" +
+            "  - FileTokenStorage('./tokens.json')\n" + 
+            "  - EncryptedTokenStorage(fileStorage, key) [recommended]\n" +
+            "  - DatabaseTokenStorage(connection, options)\n" +
+            "  - InMemoryTokenStorage() [NOT RECOMMENDED]\n\n" +
+            "See documentation: https://github.com/darrylmorley/lightspeed-retail-sdk#token-storage"
+          );
+        }
+      } catch (error) {
+        // If auto-discovery fails, throw helpful error
+        throw new Error(
+          "Failed to auto-discover token storage. " + error.message
+        );
+      }
+    }
+
+    this._storageInitialized = true;
   }
 
   // Core error handling
@@ -216,6 +259,9 @@ export class LightspeedSDKCore {
 
   // Token management
   async getToken() {
+    // Ensure storage is initialized
+    await this._initializeStorage();
+    
     const now = new Date();
     const bufferTime = 5 * 60 * 1000; // 5-minute buffer
 
@@ -536,6 +582,9 @@ export class LightspeedSDKCore {
   }
 
   async getTokenInfo() {
+    // Ensure storage is initialized
+    await this._initializeStorage();
+    
     const storedTokens = await this.tokenStorage.getTokens();
     return {
       hasAccessToken: !!storedTokens.access_token,

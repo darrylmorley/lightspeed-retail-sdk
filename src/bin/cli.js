@@ -5,7 +5,9 @@ import dotenv from "dotenv";
 import {
   FileTokenStorage,
   EncryptedTokenStorage,
+  DatabaseTokenStorage,
 } from "../storage/TokenStorage.mjs";
+import { StorageConfig } from "../storage/StorageConfig.mjs";
 import LightspeedRetailSDK from "../../index.mjs";
 import inquirer from "inquirer";
 import { createInterface } from "readline";
@@ -197,7 +199,7 @@ program
         ).toISOString();
 
         // 5. Store tokens using storage backend
-        storageBackend = await selectStorageBackend();
+        storageBackend = await selectStorageBackend(); // Save config for initial setup
         await storageBackend.setTokens({
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
@@ -228,7 +230,7 @@ program
   .action(async () => {
     let storageBackend = null;
     try {
-      storageBackend = await selectStorageBackend();
+      storageBackend = await selectStorageBackend(false); // Read-only, don't save config
       const tokens = await storageBackend.getTokens();
       if (!tokens || !tokens.access_token) {
         console.log("\n⚠️  No tokens found in storage.");
@@ -550,7 +552,7 @@ program
       }
 
       console.log("\n📁 Token Storage Configuration");
-      storageBackend = await selectStorageBackend();
+      storageBackend = await selectStorageBackend(); // Save config for inject-tokens setup
 
       // Validate tokens format (basic check)
       if (accessToken.length < 10) {
@@ -599,7 +601,7 @@ program
       console.log("\n🔄 Token Storage Migration Wizard\n");
       // Prompt for source backend
       console.log("Select SOURCE storage backend:");
-      sourceBackend = await selectStorageBackend();
+      sourceBackend = await selectStorageBackend(false); // Don't save config for source
       const sourceTokens = await sourceBackend.getTokens();
       if (!sourceTokens || !sourceTokens.access_token) {
         console.error("\n❌ No tokens found in source storage. Aborting.");
@@ -610,7 +612,7 @@ program
 
       // Prompt for destination backend
       console.log("\nSelect DESTINATION storage backend:");
-      destBackend = await selectStorageBackend();
+      destBackend = await selectStorageBackend(false); // Don't save config yet - will save after successful migration
 
       // Attempt to create table/collection/file if it doesn't exist (best effort)
       switch (destBackend.constructor.name) {
@@ -726,6 +728,16 @@ program
       }
       await destBackend.setTokens(sourceTokens);
       console.log("\n🎉 Tokens migrated successfully!");
+      
+      // Update storage configuration to point to the new destination
+      try {
+        const storageConfig = new StorageConfig();
+        const config = await getStorageConfig(destBackend);
+        await storageConfig.saveConfig(config);
+        console.log("✅ Storage configuration updated for auto-discovery");
+      } catch (configError) {
+        console.warn(`Warning: Could not update storage config: ${configError.message}`);
+      }
     } catch (error) {
       console.error("\n❌ Migration failed:", error.message);
     } finally {
@@ -741,7 +753,7 @@ program
   .action(async () => {
     let storageBackend = null;
     try {
-      storageBackend = await selectStorageBackend();
+      storageBackend = await selectStorageBackend(false); // Read-only, don't save config
       const tokens = await storageBackend.getTokens();
       if (!tokens || !tokens.access_token) {
         console.log("\n⚠️  No tokens found in storage. Please login first.");
@@ -1045,7 +1057,70 @@ async function sendTestTokenRefreshFailureEmail(error, accountID) {
   }
 }
 
-async function selectStorageBackend() {
+/**
+ * Extract configuration from a storage instance for saving
+ * @param {TokenStorage} storage - Storage instance
+ * @returns {Object} Configuration object
+ */
+async function getStorageConfig(storage) {
+  // Handle EncryptedTokenStorage wrapper
+  if (storage.adapter) {
+    const innerConfig = await getStorageConfig(storage.adapter);
+    return {
+      type: innerConfig.type === "file" ? "encrypted-file" : "database",
+      settings: {
+        ...innerConfig.settings,
+        encrypted: true,
+        encryptionKey: process.env.LIGHTSPEED_ENCRYPTION_KEY || "[provided]"
+      }
+    };
+  }
+  
+  // Handle FileTokenStorage
+  if (storage.filePath) {
+    return {
+      type: "file",
+      settings: {
+        filePath: storage.filePath
+      }
+    };
+  }
+  
+  // Handle DatabaseTokenStorage
+  if (storage.dbConnectionString) {
+    return {
+      type: "database",
+      settings: {
+        connectionString: storage.dbConnectionString,
+        dbType: storage.dbType,
+        tableName: storage.tableName,
+        appId: storage.appId
+      }
+    };
+  }
+  
+  throw new Error("Unknown storage type for configuration");
+}
+
+async function selectStorageBackend(saveConfig = true) {
+  const storageConfig = new StorageConfig();
+  const storage = await selectStorageBackendInternal();
+  
+  // Save configuration for auto-discovery if requested
+  if (saveConfig) {
+    try {
+      const config = await getStorageConfig(storage);
+      await storageConfig.saveConfig(config);
+      console.log("✅ Storage configuration saved for auto-discovery");
+    } catch (error) {
+      console.warn(`Warning: Could not save storage config: ${error.message}`);
+    }
+  }
+  
+  return storage;
+}
+
+async function selectStorageBackendInternal() {
   const { storageType } = await inquirer.prompt([
     {
       type: "list",
@@ -1148,10 +1223,6 @@ async function selectStorageBackend() {
       default:
         throw new Error("Unsupported database type");
     }
-    // Dynamically import DatabaseTokenStorage
-    const { DatabaseTokenStorage } = await import(
-      "../storage/TokenStorage.mjs"
-    );
     const dbStorage = new DatabaseTokenStorage(dbConnectionString, {
       dbType,
       tableName,
@@ -1239,7 +1310,7 @@ program
       console.log("🔄 Refreshing stored access token...\n");
 
       // Get storage backend
-      storageBackend = await selectStorageBackend();
+      storageBackend = await selectStorageBackend(false); // Read-only, don't save config
 
       // Get existing tokens
       const tokens = await storageBackend.getTokens();
