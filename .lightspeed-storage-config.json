@@ -1,0 +1,10 @@
+{
+  "type": "encrypted-file",
+  "settings": {
+    "filePath": "./tests/live-tokens.json",
+    "encrypted": true,
+    "encryptionKey": "0e3de8201973a5ef13d6f858fd3c28513541b2b164dfc75470027b1e4530bcfa"
+  },
+  "lastUpdated": "2025-08-15T10:45:35.837Z",
+  "version": "1.0"
+}

@@ -10,7 +10,7 @@ async function testCJS() {
 
   try {
     // Create FileTokenStorage instance
-    const fileStorage = new FileTokenStorage("./tests/live-tokens.json");
+    const fileStorage = new FileTokenStorage("./live-tokens.json");
 
     const encryptionKey = process.env.LIGHTSPEED_ENCRYPTION_KEY;
     const tokenStorage = encryptionKey

@@ -9,7 +9,7 @@ async function testSDK() {
 
   try {
     // Create FileTokenStorage instance
-    const fileStorage = new FileTokenStorage("./tests/live-tokens.json");
+    const fileStorage = new FileTokenStorage("./live-tokens.json");
 
     const encryptionKey = process.env.LIGHTSPEED_ENCRYPTION_KEY;
     const tokenStorage = encryptionKey
@@ -107,7 +107,7 @@ async function testSDK() {
 
     console.log("\n🎉 All tests passed!");
     console.log(
-      "💾 Your tokens are stored in ./tests/live-tokens.json for future use"
+      "💾 Your tokens are stored in ./live-tokens.json for future use"
     );
   } catch (error) {
     console.error("❌ Test failed:", error.message);
