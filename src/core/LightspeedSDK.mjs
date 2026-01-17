@@ -336,6 +336,17 @@ export class LightspeedSDKCore {
     } catch (error) {
       console.error("❌ Token refresh failed:", error.message);
 
+      // Log detailed error response from Lightspeed for debugging
+      if (error.response?.data) {
+        console.error(
+          "📋 Error details from Lightspeed:",
+          JSON.stringify(error.response.data, null, 2)
+        );
+      }
+      if (error.response?.status) {
+        console.error("📋 HTTP Status:", error.response.status);
+      }
+
       // Check if the token was refreshed by another process
       const updatedTokens = await this.tokenStorage.getTokens();
       if (updatedTokens.access_token && updatedTokens.expires_at) {
