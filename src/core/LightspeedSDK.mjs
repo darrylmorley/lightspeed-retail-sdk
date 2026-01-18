@@ -1,8 +1,74 @@
 import axios from "axios";
+import { promises as fs } from "fs";
+import path from "path";
+import os from "os";
 
 const operationUnits = { GET: 1, POST: 10, PUT: 10 };
 const getRequestUnits = (operation) => operationUnits[operation] || 10;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Cross-process lock file for token refresh
+const LOCK_FILE = path.join(os.tmpdir(), ".lightspeed-token-refresh.lock");
+const LOCK_TIMEOUT = 30000; // 30 seconds
+
+/**
+ * Acquire a cross-process lock for token refresh.
+ * Uses atomic file creation to ensure only one process can refresh at a time.
+ */
+async function acquireRefreshLock() {
+  const maxRetries = 300; // 30 seconds max wait (300 * 100ms)
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      // Check for and clean stale lock
+      try {
+        const content = await fs.readFile(LOCK_FILE, "utf8");
+        const lockData = JSON.parse(content);
+        if (Date.now() - lockData.timestamp > LOCK_TIMEOUT) {
+          console.log("🔓 Removing stale token refresh lock");
+          await fs.unlink(LOCK_FILE);
+        }
+      } catch (e) {
+        // Lock file doesn't exist or is invalid - that's fine
+      }
+
+      // Try to acquire lock atomically (fails if file exists)
+      await fs.writeFile(
+        LOCK_FILE,
+        JSON.stringify({
+          pid: process.pid,
+          timestamp: Date.now(),
+        }),
+        { flag: "wx" }
+      );
+      return true;
+    } catch (error) {
+      if (error.code === "EEXIST") {
+        // Lock held by another process, wait and retry
+        await sleep(100);
+        continue;
+      }
+      throw error;
+    }
+  }
+  // Timeout - force acquire (stale lock from crashed process)
+  console.warn("⚠️ Token refresh lock timeout, forcing acquisition");
+  await fs.writeFile(
+    LOCK_FILE,
+    JSON.stringify({ pid: process.pid, timestamp: Date.now() })
+  );
+  return true;
+}
+
+/**
+ * Release the cross-process token refresh lock.
+ */
+async function releaseRefreshLock() {
+  try {
+    await fs.unlink(LOCK_FILE);
+  } catch (e) {
+    // Ignore errors (file may not exist)
+  }
+}
 
 /**
  * Centralized query param builder for all API endpoints.
@@ -294,10 +360,26 @@ export class LightspeedSDKCore {
       // If still invalid, proceed to refresh
     }
 
-    this.refreshInProgress = true; // Lock the refresh process
+    this.refreshInProgress = true; // Lock the refresh process (in-process)
 
     try {
-      const refreshToken = storedTokens.refresh_token || this.refreshToken;
+      // Acquire cross-process lock to prevent multiple processes refreshing simultaneously
+      console.log("🔒 Acquiring token refresh lock...");
+      await acquireRefreshLock();
+
+      // Re-read tokens - another process may have refreshed while we waited for the lock
+      const freshTokens = await this.tokenStorage.getTokens();
+      if (freshTokens.access_token && freshTokens.expires_at) {
+        const expiryTime = new Date(freshTokens.expires_at);
+        if (expiryTime.getTime() - now.getTime() > bufferTime) {
+          console.log("🔄 Tokens already refreshed by another process");
+          this.token = freshTokens.access_token;
+          return this.token;
+        }
+      }
+
+      // Use the fresh refresh token, not the potentially stale one from earlier
+      const refreshToken = freshTokens.refresh_token || this.refreshToken;
 
       if (!refreshToken) {
         throw new Error("No refresh token available");
@@ -373,7 +455,8 @@ export class LightspeedSDKCore {
 
       throw new Error(helpMsg);
     } finally {
-      this.refreshInProgress = false; // Release the lock
+      this.refreshInProgress = false; // Release in-process lock
+      await releaseRefreshLock(); // Release cross-process lock
     }
   }
 
